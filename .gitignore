@@ -1,0 +1,11 @@
+# Build artifacts
+.build/
+DIST/
+dist/
+
+# macOS
+.DS_Store
+
+# Xcode / SwiftPM
+*.xcodeproj
+.swiftpm/
