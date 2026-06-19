@@ -667,6 +667,13 @@ private struct WordReviewPane: View {
     }
 }
 
+private extension Double {
+    func rounded(toPlaces places: Int) -> Double {
+        let divisor = pow(10.0, Double(places))
+        return (self * divisor).rounded() / divisor
+    }
+}
+
 private struct DropTargetOverlay: View {
     var body: some View {
         ZStack {
@@ -696,6 +703,10 @@ private struct ImageBrowserPane: View {
     let onPreviousTab: @MainActor () -> Void
     let onNextTab: @MainActor () -> Void
     let onClose: @MainActor () -> Void
+
+    @AppStorage("imageBrowserZoom") private var browserZoom: Double = 0.6
+    private let minZoom = 0.3
+    private let maxZoom = 1.0
 
     private var selectedTab: ImageSearchTab? {
         if let selectedTabID,
@@ -745,6 +756,34 @@ private struct ImageBrowserPane: View {
                         .controlSize(.small)
                 }
 
+                Divider()
+                    .frame(height: 22)
+
+                HStack(spacing: 4) {
+                    Button {
+                        browserZoom = max(minZoom, (browserZoom - 0.1).rounded(toPlaces: 1))
+                    } label: {
+                        Image(systemName: "minus.magnifyingglass")
+                    }
+                    .buttonStyle(.borderless)
+                    .disabled(browserZoom <= minZoom)
+                    .help("Zoom out to show more images")
+
+                    Text("\(Int((browserZoom * 100).rounded()))%")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                        .frame(width: 38)
+
+                    Button {
+                        browserZoom = min(maxZoom, (browserZoom + 0.1).rounded(toPlaces: 1))
+                    } label: {
+                        Image(systemName: "plus.magnifyingglass")
+                    }
+                    .buttonStyle(.borderless)
+                    .disabled(browserZoom >= maxZoom)
+                    .help("Zoom in to show fewer, larger images")
+                }
+
                 Button(action: onClose) {
                     Image(systemName: "xmark.circle.fill")
                 }
@@ -758,7 +797,7 @@ private struct ImageBrowserPane: View {
             Divider()
 
             if let selectedTab {
-                GoogleImageBrowser(tab: selectedTab, onImagePicked: onImagePicked)
+                GoogleImageBrowser(tab: selectedTab, pageZoom: browserZoom, onImagePicked: onImagePicked)
             } else {
                 ContentUnavailableView("No Search", systemImage: "magnifyingglass")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -793,6 +832,7 @@ private struct ImageSearchTabButton: View {
 
 private struct GoogleImageBrowser: NSViewRepresentable {
     let tab: ImageSearchTab
+    let pageZoom: Double
     let onImagePicked: @MainActor (PickedBrowserImage) -> Void
 
     func makeCoordinator() -> Coordinator {
@@ -811,6 +851,7 @@ private struct GoogleImageBrowser: NSViewRepresentable {
 
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.customUserAgent = clipartBrowserUserAgent
+        webView.pageZoom = CGFloat(pageZoom)
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
         webView.allowsBackForwardNavigationGestures = true
@@ -821,6 +862,10 @@ private struct GoogleImageBrowser: NSViewRepresentable {
     func updateNSView(_ webView: WKWebView, context: Context) {
         context.coordinator.tab = tab
         context.coordinator.onImagePicked = onImagePicked
+
+        if webView.pageZoom != CGFloat(pageZoom) {
+            webView.pageZoom = CGFloat(pageZoom)
+        }
 
         if webView.url?.absoluteString != tab.searchURL.absoluteString {
             webView.load(URLRequest(url: tab.searchURL))
