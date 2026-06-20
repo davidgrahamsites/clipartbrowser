@@ -4,6 +4,10 @@
   "description": "Windows (Electron) edition of ClipartBrowser",
   "author": "ClipartBrowser",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/davidgrahamsites/clipartbrowser.git"
+  },
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
@@ -15,6 +19,7 @@
     "directories": {
       "output": "dist"
     },
+    "publish": null,
     "npmRebuild": false,
     "files": [
       "src/**/*",
