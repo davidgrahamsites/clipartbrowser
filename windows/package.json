@@ -2,6 +2,7 @@
   "name": "clipartbrowser-windows",
   "version": "0.1.0",
   "description": "Windows (Electron) edition of ClipartBrowser",
+  "author": "ClipartBrowser",
   "license": "MIT",
   "main": "src/main.js",
   "scripts": {
@@ -14,9 +15,11 @@
     "directories": {
       "output": "dist"
     },
+    "npmRebuild": false,
     "files": [
       "src/**/*",
-      "package.json"
+      "package.json",
+      "node_modules/**/*"
     ],
     "win": {
       "target": [
