@@ -75,3 +75,25 @@ This file records user-reported bugs or workflow problems and the fix applied.
 - Symptom: After switching the web view to a desktop Safari `User-Agent` (needed for reliable image quality), Google served its desktop Images layout, which renders very large thumbnails — so only one or two images were visible at a time and the grid was hard to browse.
 - Fix: Added a zoom control (−/＋ buttons with a percentage readout) to the image-browser toolbar that drives `WKWebView.pageZoom`. Defaults to 60% so many thumbnails are visible at once, persists via `@AppStorage`, and updates the web view live.
 - Verification: `swift build`, packaged app launch; confirmed more thumbnails visible and zoom adjusts the grid density.
+
+### Image grid stopped loading after ~34 picks (couldn't pick more)
+- Symptom: After picking many cards in one session, the embedded Google Images grid went blank (empty thumbnails) and further picks did nothing.
+- Diagnosis: Added file-based debug logging (`DebugLog` → `debuglog.md`, truncated each launch) instrumenting the pick → download → import pipeline. The log showed all 34 imports succeeding with `isImporting` correctly reset every time — the import code never hung. No further `JS message received` events arrived, meaning the web view itself stopped rendering: the WKWebView web-content process is terminated/throttled after many rapid full-page Google reloads, leaving a blank grid.
+- Fix: Implemented `webViewWebContentProcessDidTerminate` to log and auto-reload the web view, added navigation-outcome logging (didFinish/didFail/HTTP ≥ 400), a 15s per-request download timeout (so a slow host can't wedge picking), and a manual Reload button in the image-browser toolbar for when the grid stalls.
+- Verification: `swift build`, packaged app launch; debug log confirms the import pipeline stays healthy and now records navigation/process-termination events.
+
+### Embedded Google web view reloaded again and again
+- Symptom: After the grid stalled (Google throttling the session), the web view began reloading repeatedly on its own.
+- Diagnosis: `GoogleImageBrowser.updateNSView` reloaded whenever `webView.url != tab.searchURL`. Google rewrites/redirects the search URL immediately (and to a consent/"sorry" page once throttled), so that comparison stayed true and every SwiftUI re-render triggered another load — an endless loop, compounded by the crash auto-reload.
+- Fix: Load each tab's search exactly once, keyed by tab id (`Coordinator.loadedTabID`), instead of comparing URLs. Debounced `webViewWebContentProcessDidTerminate` auto-reload (min 10s apart) so a crash→reload→crash sequence can't spin. Manual Reload button and per-tab navigation still work.
+- Verification: `swift build`, `swift test`, packaged app launch; debug log shows ~one `nav didFinish` per tab instead of a reload flood.
+
+### Added a numbered slide-label list export (.txt / .docx)
+- Request: Export a list of slide numbers with their word labels, e.g. `1 - Tall` / `2 - Short`, as a text or Word file.
+- Implementation: `WordListExporter` (core) builds the numbered, title-cased list as plain text or a minimal Word-compatible `.docx` (OOXML via ZIPFoundation). Added an "Export List" toolbar button with a save panel offering `.txt` or `.docx`; the extension chooses the format. Order follows the flashcard/slide order.
+- Verification: Added `WordListExporterTests` (text format + docx is a valid zip containing the lines); `swift test`, `swift build`, packaged app launch.
+
+### Added Baidu as a selectable image search engine
+- Request: Offer Baidu image search alongside Google, selectable via a control, keeping all picking mechanics (big image, upscaler, etc.).
+- Implementation: `ImageSearchEngine` enum (google/baidu) in core with per-engine `searchURL(for:)` (`BaiduImagesSearch` uses `image.baidu.com/search/index?tn=baiduimage&word=...`). Added a segmented Google/Baidu picker in the image-browser toolbar (persisted via `@AppStorage`). The picker JS is now universal: it extracts the full-size image from Google's `imgurl` anchor OR Baidu's `data-objurl` item, with the thumbnail as fallback — so the existing bigger-of-two download, trimming, and upscaler all apply unchanged. Web view loads are keyed on (tab, engine) so switching engines reloads the current search without re-introducing the reload loop.
+- Verification: `swift build`, `swift test`, packaged app launch.

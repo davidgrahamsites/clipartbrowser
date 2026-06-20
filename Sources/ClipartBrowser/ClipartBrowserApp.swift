@@ -47,6 +47,7 @@ private struct ContentView: View {
     @State private var outputOrientation: PowerPointSlideOrientation = .portrait
     @State private var textLabelMode: TextLabelMode = .show
     @State private var resizeMethod: ImageResizeMethod = .coreImage
+    @AppStorage("imageSearchEngine") private var searchEngine: ImageSearchEngine = .google
     @State private var isImporting = false
     @State private var isImportingBrowserImage = false
     @State private var imageBrowserSession: ImageBrowserSession?
@@ -70,6 +71,7 @@ private struct ContentView: View {
                         ImageBrowserPane(
                             session: imageBrowserSession,
                             selectedTabID: $selectedBrowserTabID,
+                            searchEngine: $searchEngine,
                             isImporting: isImportingBrowserImage,
                             onImagePicked: importPickedBrowserImage,
                             onPreviousTab: { moveBrowserTab(by: -1) },
@@ -134,6 +136,14 @@ private struct ContentView: View {
                     Label("Export PPTX", systemImage: "square.and.arrow.up")
                 }
                 .disabled(flashcards.isEmpty || isImportingBrowserImage)
+
+                Button {
+                    exportWordList()
+                } label: {
+                    Label("Export List", systemImage: "list.number")
+                }
+                .disabled(flashcards.isEmpty || isImportingBrowserImage)
+                .help("Export a numbered list of slide labels as .txt or .docx")
 
                 Spacer()
 
@@ -368,6 +378,7 @@ private struct ContentView: View {
 
         imageBrowserSession = ImageBrowserSession(tabs: tabs, replacingFlashcardID: replacingFlashcardID)
         selectedBrowserTabID = firstTab.id
+        DebugLog.log("openImageBrowser tabs=\(tabs.count) replacing=\(replacingFlashcardID != nil) firstTab=\(firstTab.word)")
         status = replacingFlashcardID == nil
             ? "Choose images from the Google Images tabs."
             : "Choose a replacement image for \(firstTab.word)."
@@ -395,9 +406,10 @@ private struct ContentView: View {
 
     @MainActor
     private func importPickedBrowserImage(_ image: PickedBrowserImage) {
-        guard image.tabID == selectedBrowserTabID,
-              !isImportingBrowserImage
-        else {
+        let tabMatch = image.tabID == selectedBrowserTabID
+        DebugLog.log("pick received word=\(image.word) tabMatch=\(tabMatch) isImporting=\(isImportingBrowserImage) cards=\(flashcards.count)")
+        guard tabMatch, !isImportingBrowserImage else {
+            DebugLog.log("pick IGNORED word=\(image.word) reason=\(tabMatch ? "alreadyImporting" : "tabMismatch")")
             return
         }
 
@@ -410,7 +422,11 @@ private struct ContentView: View {
     private func importBrowserImage(_ image: PickedBrowserImage) async {
         isImportingBrowserImage = true
         status = "Importing image for \(image.word)..."
-        defer { isImportingBrowserImage = false }
+        DebugLog.log("import START word=\(image.word)")
+        defer {
+            isImportingBrowserImage = false
+            DebugLog.log("import END word=\(image.word) isImporting reset")
+        }
 
         let result = ClipartImageResult(
             id: "google-\(image.imageURL.absoluteString)",
@@ -450,9 +466,11 @@ private struct ContentView: View {
                 flashcards.append(preview)
             }
 
+            DebugLog.log("import OK word=\(image.word) chosen=\(Int(download.pixelSize.width))x\(Int(download.pixelSize.height)) cards=\(flashcards.count)")
             status = "Added image for \(image.word) — \(Int(download.pixelSize.width))×\(Int(download.pixelSize.height))px."
             moveBrowserTabAfterImporting(tabID: image.tabID)
         } catch {
+            DebugLog.log("import FAIL word=\(image.word) error=\(error.localizedDescription)")
             status = "Could not import image for \(image.word): \(error.localizedDescription)"
         }
     }
@@ -462,16 +480,19 @@ private struct ContentView: View {
         guard let session = imageBrowserSession,
               let currentIndex = session.tabs.firstIndex(where: { $0.id == tabID })
         else {
+            DebugLog.log("advanceTab NO_SESSION_OR_TAB")
             return
         }
 
         let nextIndex = currentIndex + 1
         if nextIndex < session.tabs.count {
             selectedBrowserTabID = session.tabs[nextIndex].id
+            DebugLog.log("advanceTab from #\(currentIndex) to #\(nextIndex) word=\(session.tabs[nextIndex].word) selected=\(session.tabs[nextIndex].id)")
             status = "Choose an image for \(session.tabs[nextIndex].word)."
         } else if session.replacingFlashcardID != nil {
             closeImageBrowser()
         } else {
+            DebugLog.log("advanceTab END_OF_TABS at #\(currentIndex)")
             status = "Picked \(flashcards.count) images. Review cards before exporting."
         }
     }
@@ -482,31 +503,45 @@ private struct ContentView: View {
     /// site), the thumbnail is used, so the result is never worse than before.
     private func downloadImageData(for result: ClipartImageResult) async throws -> DownloadedImage {
         let referer = result.landingPageURL?.absoluteString
+        DebugLog.log("download START primary=\(result.imageURL.host ?? "?") thumb=\(result.thumbnailURL?.host ?? "none")")
 
-        async let primary = decodedImage(from: result.imageURL, referer: referer)
+        async let primary = decodedImage(from: result.imageURL, label: "primary", referer: referer)
         async let fallback: DownloadedImage? = {
             guard let thumbnailURL = result.thumbnailURL else { return nil }
-            return await decodedImage(from: thumbnailURL, referer: referer)
+            return await decodedImage(from: thumbnailURL, label: "thumb", referer: referer)
         }()
 
         let candidates = [await primary, await fallback].compactMap { $0 }
         if let best = candidates.max(by: { $0.pixelArea < $1.pixelArea }) {
+            DebugLog.log("download DONE candidates=\(candidates.count) chose=\(Int(best.pixelSize.width))x\(Int(best.pixelSize.height))")
             return best
         }
         // Nothing decoded; surface a real error by attempting the primary directly.
+        DebugLog.log("download NO_DECODE retrying primary directly")
         let data = try await downloadData(from: result.imageURL, referer: referer)
         return DownloadedImage(data: data, pixelSize: pixelSize(of: data) ?? .zero)
     }
 
     /// Downloads `url` and decodes it; returns `nil` if the request fails or the
     /// bytes aren't a valid image.
-    private func decodedImage(from url: URL, referer: String?) async -> DownloadedImage? {
-        guard let data = try? await downloadData(from: url, referer: referer),
-              let size = pixelSize(of: data)
-        else {
+    private func decodedImage(from url: URL, label: String, referer: String?) async -> DownloadedImage? {
+        let start = Date()
+        do {
+            let data = try await downloadData(from: url, referer: referer)
+            guard let size = pixelSize(of: data) else {
+                DebugLog.log("dl \(label) NOT_IMAGE host=\(url.host ?? "?") bytes=\(data.count) t=\(elapsedMS(start))ms")
+                return nil
+            }
+            DebugLog.log("dl \(label) OK host=\(url.host ?? "?") \(Int(size.width))x\(Int(size.height)) bytes=\(data.count) t=\(elapsedMS(start))ms")
+            return DownloadedImage(data: data, pixelSize: size)
+        } catch {
+            DebugLog.log("dl \(label) FAIL host=\(url.host ?? "?") error=\(error.localizedDescription) t=\(elapsedMS(start))ms")
             return nil
         }
-        return DownloadedImage(data: data, pixelSize: size)
+    }
+
+    private func elapsedMS(_ start: Date) -> Int {
+        Int(Date().timeIntervalSince(start) * 1000)
     }
 
     private func pixelSize(of data: Data) -> CGSize? {
@@ -525,6 +560,8 @@ private struct ContentView: View {
         if let referer {
             request.setValue(referer, forHTTPHeaderField: "Referer")
         }
+        // Bound each request so a slow/hung host can't permanently block picking.
+        request.timeoutInterval = 15
         let (data, response) = try await URLSession.shared.data(for: request)
         if let httpResponse = response as? HTTPURLResponse,
            !(200..<300).contains(httpResponse.statusCode) {
@@ -559,6 +596,27 @@ private struct ContentView: View {
     }
 
     @MainActor
+    private func exportWordList() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.plainText, UTType(filenameExtension: "docx") ?? .data]
+        panel.nameFieldStringValue = "\(exportBaseName) Word List.txt"
+
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        let words = flashcards.map(\.word)
+        do {
+            if url.pathExtension.lowercased() == "docx" {
+                try WordListExporter.makeDOCX(for: words).write(to: url, options: .atomic)
+            } else {
+                try Data(WordListExporter.text(for: words).utf8).write(to: url, options: .atomic)
+            }
+            status = "Exported \(url.lastPathComponent)."
+        } catch {
+            status = "Could not export word list: \(error.localizedDescription)"
+        }
+    }
+
+    @MainActor
     private func removeFlashcard(_ flashcard: FlashcardPreview) {
         flashcards.removeAll { $0.id == flashcard.id }
         if selectedFlashcardID == flashcard.id { selectedFlashcardID = nil }
@@ -589,9 +647,13 @@ private struct ContentView: View {
         )
     }
 
-    private var exportFileNameWithExtension: String {
+    private var exportBaseName: String {
         let trimmed = exportFileName.trimmingCharacters(in: .whitespacesAndNewlines)
-        let baseName = trimmed.isEmpty ? "Vocabulary Flashcards" : trimmed
+        return trimmed.isEmpty ? "Vocabulary Flashcards" : trimmed
+    }
+
+    private var exportFileNameWithExtension: String {
+        let baseName = exportBaseName
         return baseName.lowercased().hasSuffix(".pptx") ? baseName : "\(baseName).pptx"
     }
 }
@@ -698,6 +760,7 @@ private struct DropTargetOverlay: View {
 private struct ImageBrowserPane: View {
     let session: ImageBrowserSession
     @Binding var selectedTabID: UUID?
+    @Binding var searchEngine: ImageSearchEngine
     let isImporting: Bool
     let onImagePicked: @MainActor (PickedBrowserImage) -> Void
     let onPreviousTab: @MainActor () -> Void
@@ -705,6 +768,7 @@ private struct ImageBrowserPane: View {
     let onClose: @MainActor () -> Void
 
     @AppStorage("imageBrowserZoom") private var browserZoom: Double = 0.6
+    @State private var reloadToken = 0
     private let minZoom = 0.3
     private let maxZoom = 1.0
 
@@ -759,6 +823,32 @@ private struct ImageBrowserPane: View {
                 Divider()
                     .frame(height: 22)
 
+                Picker("Search engine", selection: $searchEngine) {
+                    ForEach(ImageSearchEngine.allCases) { engine in
+                        Text(engine.displayName).tag(engine)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .frame(width: 150)
+                .help("Choose which image search engine to use")
+
+                Divider()
+                    .frame(height: 22)
+
+                Button {
+                    reloadToken += 1
+                    DebugLog.log("manual reload requested token=\(reloadToken)")
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                }
+                .buttonStyle(.borderless)
+                .controlSize(.large)
+                .help("Reload images (use if the grid stops loading)")
+
+                Divider()
+                    .frame(height: 22)
+
                 HStack(spacing: 4) {
                     Button {
                         browserZoom = max(minZoom, (browserZoom - 0.1).rounded(toPlaces: 1))
@@ -797,7 +887,7 @@ private struct ImageBrowserPane: View {
             Divider()
 
             if let selectedTab {
-                GoogleImageBrowser(tab: selectedTab, pageZoom: browserZoom, onImagePicked: onImagePicked)
+                GoogleImageBrowser(tab: selectedTab, engine: searchEngine, pageZoom: browserZoom, reloadToken: reloadToken, onImagePicked: onImagePicked)
             } else {
                 ContentUnavailableView("No Search", systemImage: "magnifyingglass")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -832,8 +922,13 @@ private struct ImageSearchTabButton: View {
 
 private struct GoogleImageBrowser: NSViewRepresentable {
     let tab: ImageSearchTab
+    let engine: ImageSearchEngine
     let pageZoom: Double
+    let reloadToken: Int
     let onImagePicked: @MainActor (PickedBrowserImage) -> Void
+
+    private var searchURL: URL { engine.searchURL(for: tab.word) }
+    private var loadKey: String { "\(tab.id.uuidString)-\(engine.rawValue)" }
 
     func makeCoordinator() -> Coordinator {
         Coordinator(tab: tab, onImagePicked: onImagePicked)
@@ -855,7 +950,8 @@ private struct GoogleImageBrowser: NSViewRepresentable {
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
         webView.allowsBackForwardNavigationGestures = true
-        webView.load(URLRequest(url: tab.searchURL))
+        webView.load(URLRequest(url: searchURL))
+        context.coordinator.loadedKey = loadKey
         return webView
     }
 
@@ -867,8 +963,18 @@ private struct GoogleImageBrowser: NSViewRepresentable {
             webView.pageZoom = CGFloat(pageZoom)
         }
 
-        if webView.url?.absoluteString != tab.searchURL.absoluteString {
-            webView.load(URLRequest(url: tab.searchURL))
+        if reloadToken != context.coordinator.lastReloadToken {
+            context.coordinator.lastReloadToken = reloadToken
+            webView.reload()
+            return
+        }
+
+        // Load a tab's search exactly once per (tab, engine). Comparing against
+        // webView.url would reload on every SwiftUI update once the engine
+        // rewrites/redirects the URL. Switching engine changes loadKey and reloads.
+        if context.coordinator.loadedKey != loadKey {
+            context.coordinator.loadedKey = loadKey
+            webView.load(URLRequest(url: searchURL))
         }
     }
 
@@ -879,6 +985,9 @@ private struct GoogleImageBrowser: NSViewRepresentable {
     final class Coordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate, WKUIDelegate {
         var tab: ImageSearchTab
         var onImagePicked: @MainActor (PickedBrowserImage) -> Void
+        var lastReloadToken = 0
+        var loadedKey: String?
+        var lastAutoReload: Date?
 
         init(tab: ImageSearchTab, onImagePicked: @escaping @MainActor (PickedBrowserImage) -> Void) {
             self.tab = tab
@@ -886,12 +995,14 @@ private struct GoogleImageBrowser: NSViewRepresentable {
         }
 
         func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+            DebugLog.log("JS message received name=\(message.name) tab=\(tab.word)")
             guard message.name == "clipartImagePicker",
                   let payload = message.body as? [String: Any],
                   let imageURLString = payload["imageURL"] as? String,
                   let imageURL = URL(string: imageURLString),
                   imageURL.scheme?.hasPrefix("http") == true
             else {
+                DebugLog.log("JS message DROPPED tab=\(tab.word) (no usable imageURL)")
                 return
             }
 
@@ -922,6 +1033,43 @@ private struct GoogleImageBrowser: NSViewRepresentable {
                 webView.load(navigationAction.request)
             }
             return nil
+        }
+
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            DebugLog.log("nav didFinish host=\(webView.url?.host ?? "?")")
+        }
+
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            DebugLog.log("nav didFail error=\(error.localizedDescription)")
+        }
+
+        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            DebugLog.log("nav didFailProvisional error=\(error.localizedDescription)")
+        }
+
+        func webView(
+            _ webView: WKWebView,
+            decidePolicyFor navigationResponse: WKNavigationResponse,
+            decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void
+        ) {
+            if let http = navigationResponse.response as? HTTPURLResponse, http.statusCode >= 400 {
+                DebugLog.log("nav response status=\(http.statusCode) host=\(http.url?.host ?? "?")")
+            }
+            decisionHandler(.allow)
+        }
+
+        /// The web-content process can be killed (memory/throttling) after many
+        /// reloads, leaving a blank grid. Reload once to auto-recover, but debounce
+        /// so a crash→reload→crash sequence can't spin.
+        func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+            let now = Date()
+            if let last = lastAutoReload, now.timeIntervalSince(last) < 10 {
+                DebugLog.log("WEBCONTENT TERMINATED — skipping auto-reload (debounced)")
+                return
+            }
+            lastAutoReload = now
+            DebugLog.log("WEBCONTENT TERMINATED — auto-reloading")
+            webView.reload()
         }
     }
 
@@ -975,23 +1123,39 @@ private struct GoogleImageBrowser: NSViewRepresentable {
             }
         }
 
+        // Baidu Images stores the full original on the grid item as data-objurl
+        // (and a usable thumbnail as data-thumburl).
+        function fullImageFromBaidu(node) {
+            if (!node || !node.closest) { return null; }
+            var item = node.closest('[data-objurl]') || node.closest('[data-thumburl]');
+            if (!item) { return null; }
+            return {
+                imageURL: httpOnly(item.getAttribute('data-objurl')),
+                thumbnailURL: httpOnly(item.getAttribute('data-thumburl')),
+                pageURL: item.getAttribute('data-fromurl') || null
+            };
+        }
+
         function pickImageFrom(event) {
             var image = firstImageFrom(event.target);
             if (!image) { return; }
 
+            var google = fullImageFromImgres(image);
+            var baidu = fullImageFromBaidu(image);
+
             var thumb = httpOnly(image.currentSrc || image.src ||
                 image.getAttribute('data-src') || image.getAttribute('data-iurl') ||
-                image.getAttribute('data-ou'));
+                image.getAttribute('data-ou')) || (baidu && baidu.thumbnailURL) || null;
 
-            var full = fullImageFromImgres(image);
-            var imageURL = (full && full.imageURL) || thumb;
+            var full = (google && google.imageURL) || (baidu && baidu.imageURL) || null;
+            var imageURL = full || thumb;
             if (!imageURL) { return; }
 
             event.preventDefault();
             event.stopPropagation();
 
             var link = image.closest ? image.closest('a') : null;
-            var pageURL = (full && full.pageURL) ||
+            var pageURL = (google && google.pageURL) || (baidu && baidu.pageURL) ||
                 (link && link.href ? link.href : window.location.href);
 
             window.webkit.messageHandlers.clipartImagePicker.postMessage({
@@ -1254,12 +1418,6 @@ private struct ImageBrowserSession: Identifiable, Equatable {
 private struct ImageSearchTab: Identifiable, Equatable {
     let id = UUID()
     let word: String
-    let searchURL: URL
-
-    init(word: String) {
-        self.word = word
-        self.searchURL = GoogleImagesSearch.url(for: word)
-    }
 }
 
 private struct PickedBrowserImage: Identifiable, Equatable {
