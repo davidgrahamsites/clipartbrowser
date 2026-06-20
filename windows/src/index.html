@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'"
+    />
+    <title>ClipartBrowser (Windows)</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        color: #1f2937;
+      }
+      #toolbar {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        padding: 8px 12px;
+        border-bottom: 1px solid #e5e7eb;
+        background: #f9fafb;
+      }
+      #toolbar input[type="text"] { flex: 0 0 260px; padding: 6px 8px; }
+      #toolbar select, #toolbar button { padding: 6px 10px; }
+      #main { flex: 1; display: flex; min-height: 0; }
+      webview { flex: 1; border: none; }
+      #picked {
+        width: 280px;
+        border-left: 1px solid #e5e7eb;
+        overflow-y: auto;
+        padding: 10px;
+        background: #fff;
+      }
+      #picked h3 { margin: 0 0 8px; font-size: 14px; }
+      .card {
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 8px;
+        margin-bottom: 8px;
+        text-align: center;
+      }
+      .card img { max-width: 100%; max-height: 140px; }
+      .card .meta { font-size: 12px; color: #6b7280; margin-top: 4px; }
+      #status {
+        padding: 6px 12px;
+        border-top: 1px solid #e5e7eb;
+        font-size: 12px;
+        color: #6b7280;
+        background: #f9fafb;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="toolbar">
+      <select id="engine" title="Search engine"></select>
+      <input id="term" type="text" placeholder="Word (e.g. tall)" />
+      <button id="searchBtn">Search</button>
+      <button id="reloadBtn" title="Reload">Reload</button>
+    </div>
+    <div id="main">
+      <webview id="browser" allowpopups></webview>
+      <div id="picked">
+        <h3>Picked images</h3>
+        <div id="pickedList"></div>
+      </div>
+    </div>
+    <div id="status">Pick an engine, search a word, then click an image.</div>
+    <script src="renderer.js"></script>
+  </body>
+</html>
