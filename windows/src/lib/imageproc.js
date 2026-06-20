@@ -128,4 +128,11 @@ async function processPicked(dataURL, settings, method) {
   };
 }
 
-module.exports = { processPicked, trimWhite, fittedPixelSize };
+module.exports = {
+  processPicked,
+  trimWhite,
+  fittedPixelSize,
+  loadImage,
+  canvasFromImage,
+  upscale,
+};

@@ -28,7 +28,16 @@ const state = {
   selectedCardId: null,
   importing: false,
   lastLoadKey: null,
+  browserZoom: parseFloat(localStorage.getItem("zoom")) || 0.6,
+  previewPanels: [],
 };
+
+const METHODS = [
+  { id: "coreImage", name: "Sharpest detail" },
+  { id: "coreGraphics", name: "Balanced" },
+  { id: "vImage", name: "Fastest" },
+  { id: "appKit", name: "Smoothest" },
+];
 
 let nextId = 1;
 const $ = (id) => document.getElementById(id);
@@ -367,6 +376,78 @@ function updateButtons() {
   $("pickBtn").disabled = selectedWords().length === 0;
   $("pptxBtn").disabled = state.cards.length === 0;
   $("listBtn").disabled = state.cards.length === 0;
+  $("compareBtn").disabled = state.cards.length === 0;
+}
+
+// ---------- Browser zoom ----------
+function applyZoom() {
+  $("zoomPct").textContent = Math.round(state.browserZoom * 100) + "%";
+  try {
+    $("webview").setZoomFactor(state.browserZoom);
+  } catch (e) {
+    /* not ready yet */
+  }
+}
+
+function nudgeZoom(delta) {
+  state.browserZoom = Math.min(1, Math.max(0.3, Math.round((state.browserZoom + delta) * 10) / 10));
+  localStorage.setItem("zoom", String(state.browserZoom));
+  applyZoom();
+}
+
+// ---------- Upscaler preview (compare methods) ----------
+async function openPreview() {
+  const card = state.cards.find((c) => c.id === state.selectedCardId) || state.cards[state.cards.length - 1];
+  if (!card) return;
+  $("previewWord").textContent = `"${card.word}"`;
+  $("preview-overlay").style.display = "flex";
+  $("previewGrid").innerHTML = '<div class="muted">Rendering…</div>';
+  try {
+    const img = await imageproc.loadImage(card.sourceDataURL);
+    const src = imageproc.canvasFromImage(img);
+    const target = imageproc.fittedPixelSize(src.width, src.height, settingsForProc());
+    const panels = [{ name: "Original", canvas: src }];
+    for (const m of METHODS) {
+      const up = await imageproc.upscale(src, target.width, target.height, m.id);
+      panels.push({ name: m.name, canvas: up });
+    }
+    state.previewPanels = panels;
+    renderPreviewPanels();
+  } catch (e) {
+    $("previewGrid").innerHTML = `<div class="muted">Could not render: ${e.message}</div>`;
+  }
+}
+
+function renderPreviewPanels() {
+  const grid = $("previewGrid");
+  const zoom = $("previewZoom").value;
+  grid.innerHTML = "";
+  state.previewPanels.forEach((p) => {
+    const cell = document.createElement("div");
+    cell.style.cssText = "border:1px solid #e5e7eb;border-radius:6px;padding:8px";
+    const box = document.createElement("div");
+    box.style.cssText = "background:#fff;border:1px solid #f3f4f6;border-radius:6px;height:260px;overflow:auto;display:flex;align-items:center;justify-content:center";
+    const im = document.createElement("img");
+    im.src = p.canvas.toDataURL("image/png");
+    if (zoom === "fit") {
+      im.style.maxWidth = "100%";
+      im.style.maxHeight = "100%";
+    } else {
+      im.style.width = p.canvas.width * Number(zoom) + "px";
+      im.style.imageRendering = "pixelated";
+    }
+    box.appendChild(im);
+    cell.appendChild(box);
+    const t = document.createElement("div");
+    t.style.cssText = "font-weight:600;margin-top:6px";
+    t.textContent = p.name;
+    cell.appendChild(t);
+    const d = document.createElement("div");
+    d.className = "dims";
+    d.textContent = `${p.canvas.width}×${p.canvas.height}px`;
+    cell.appendChild(d);
+    grid.appendChild(cell);
+  });
 }
 
 // ---------- Wiring ----------
@@ -405,6 +486,7 @@ function init() {
   wv.addEventListener("ipc-message", (e) => {
     if (e.channel === "clipart-pick") handlePick(e.args[0]);
   });
+  wv.addEventListener("dom-ready", applyZoom);
 
   $("importBtn").addEventListener("click", () => $("fileInput").click());
   $("fileInput").addEventListener("change", (e) => {
@@ -424,6 +506,15 @@ function init() {
   $("reloadBtn").addEventListener("click", () => {
     if (wv.getURL && wv.getURL()) wv.reload();
   });
+  $("zoomOut").addEventListener("click", () => nudgeZoom(-0.1));
+  $("zoomIn").addEventListener("click", () => nudgeZoom(0.1));
+  $("zoomPct").textContent = Math.round(state.browserZoom * 100) + "%";
+
+  $("compareBtn").addEventListener("click", openPreview);
+  $("previewClose").addEventListener("click", () => {
+    $("preview-overlay").style.display = "none";
+  });
+  $("previewZoom").addEventListener("change", renderPreviewPanels);
 
   const pad = $("padding");
   const padNum = $("paddingNum");
