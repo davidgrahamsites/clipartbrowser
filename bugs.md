@@ -97,3 +97,8 @@ This file records user-reported bugs or workflow problems and the fix applied.
 - Request: Offer Baidu image search alongside Google, selectable via a control, keeping all picking mechanics (big image, upscaler, etc.).
 - Implementation: `ImageSearchEngine` enum (google/baidu) in core with per-engine `searchURL(for:)` (`BaiduImagesSearch` uses `image.baidu.com/search/index?tn=baiduimage&word=...`). Added a segmented Google/Baidu picker in the image-browser toolbar (persisted via `@AppStorage`). The picker JS is now universal: it extracts the full-size image from Google's `imgurl` anchor OR Baidu's `data-objurl` item, with the thumbnail as fallback — so the existing bigger-of-two download, trimming, and upscaler all apply unchanged. Web view loads are keyed on (tab, engine) so switching engines reloads the current search without re-introducing the reload loop.
 - Verification: `swift build`, `swift test`, packaged app launch.
+
+### Added Bing and Yandex image search engines
+- Request: Add Bing (and Yandex, which is accessible in China) as image search engines with the same picking mechanics.
+- Implementation: Extended `ImageSearchEngine` with `bing` and `yandex` (+ `BingImagesSearch`/`YandexImagesSearch` URLs). The universal picker JS now also extracts full-size images from Bing's `a.iusc` `m` JSON (`murl`/`turl`) and Yandex's `.serp-item` `data-bem` JSON (`img_href`/`preview`). The engine picker became a compact dropdown (Google/Baidu/Bing/Yandex). Bigger-of-two download, trimming, and upscaling are unchanged.
+- Verification: `swift build`, `swift test`, packaged app launch.

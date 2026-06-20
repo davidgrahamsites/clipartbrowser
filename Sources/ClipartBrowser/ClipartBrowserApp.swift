@@ -828,9 +828,9 @@ private struct ImageBrowserPane: View {
                         Text(engine.displayName).tag(engine)
                     }
                 }
-                .pickerStyle(.segmented)
+                .pickerStyle(.menu)
                 .labelsHidden()
-                .frame(width: 150)
+                .frame(width: 110)
                 .help("Choose which image search engine to use")
 
                 Divider()
@@ -1136,18 +1136,56 @@ private struct GoogleImageBrowser: NSViewRepresentable {
             };
         }
 
+        // Bing wraps each result in <a class="iusc" m='{"murl":FULL,"turl":THUMB,...}'>.
+        function fullImageFromBing(node) {
+            if (!node || !node.closest) { return null; }
+            var a = node.closest('a.iusc') || node.closest('a[m]');
+            if (!a) { return null; }
+            var m = a.getAttribute('m');
+            if (!m) { return null; }
+            try {
+                var data = JSON.parse(m);
+                return {
+                    imageURL: httpOnly(data.murl),
+                    thumbnailURL: httpOnly(data.turl),
+                    pageURL: data.purl || null
+                };
+            } catch (e) { return null; }
+        }
+
+        // Yandex stores a JSON blob on each .serp-item in data-bem; the full image
+        // is serp-item.img_href, with preview thumbnails under serp-item.preview.
+        function fullImageFromYandex(node) {
+            if (!node || !node.closest) { return null; }
+            var item = node.closest('.serp-item[data-bem]') || node.closest('[data-bem]');
+            if (!item) { return null; }
+            var bem = item.getAttribute('data-bem');
+            if (!bem) { return null; }
+            try {
+                var si = (JSON.parse(bem) || {})['serp-item'];
+                if (!si) { return null; }
+                var thumb = (si.preview && si.preview.length) ? si.preview[0].url : null;
+                var full = si.img_href || (si.dups && si.dups.length ? si.dups[0].url : null);
+                return {
+                    imageURL: httpOnly(full),
+                    thumbnailURL: httpOnly(thumb),
+                    pageURL: (si.snippet && si.snippet.url) || null
+                };
+            } catch (e) { return null; }
+        }
+
         function pickImageFrom(event) {
             var image = firstImageFrom(event.target);
             if (!image) { return; }
 
-            var google = fullImageFromImgres(image);
-            var baidu = fullImageFromBaidu(image);
+            var source = fullImageFromImgres(image) || fullImageFromBaidu(image) ||
+                fullImageFromBing(image) || fullImageFromYandex(image);
 
             var thumb = httpOnly(image.currentSrc || image.src ||
                 image.getAttribute('data-src') || image.getAttribute('data-iurl') ||
-                image.getAttribute('data-ou')) || (baidu && baidu.thumbnailURL) || null;
+                image.getAttribute('data-ou')) || (source && source.thumbnailURL) || null;
 
-            var full = (google && google.imageURL) || (baidu && baidu.imageURL) || null;
+            var full = source && source.imageURL;
             var imageURL = full || thumb;
             if (!imageURL) { return; }
 
@@ -1155,7 +1193,7 @@ private struct GoogleImageBrowser: NSViewRepresentable {
             event.stopPropagation();
 
             var link = image.closest ? image.closest('a') : null;
-            var pageURL = (google && google.pageURL) || (baidu && baidu.pageURL) ||
+            var pageURL = (source && source.pageURL) ||
                 (link && link.href ? link.href : window.location.href);
 
             window.webkit.messageHandlers.clipartImagePicker.postMessage({
