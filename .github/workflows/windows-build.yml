@@ -24,7 +24,20 @@ jobs:
         run: npm install
 
       - name: Build NSIS installer
-        run: npm run dist
+        shell: bash
+        run: |
+          set +e
+          npm run dist 2>&1 | tee build.log
+          code=${PIPESTATUS[0]}
+          if [ "$code" -ne 0 ]; then
+            echo "::group::electron-builder output (tail)"
+            tail -60 build.log
+            echo "::endgroup::"
+            tail -12 build.log | while IFS= read -r line; do
+              [ -n "$line" ] && echo "::error::$line"
+            done
+          fi
+          exit "$code"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
