@@ -7,13 +7,22 @@ as they are ported — image trimming/upscaling and PPTX/word-list export).
 
 ## Status
 
-Scaffold + first vertical slice:
+Full feature parity with the macOS app:
 
+- ✅ Document import: **.docx / .txt / .rtf / .pdf** + **image OCR** (Tesseract.js)
+- ✅ Vocabulary extraction (ported from the Swift `VocabularyExtractor`)
+- ✅ Word review (checkboxes + add custom terms)
 - ✅ Embedded image browser with **Google / Baidu / Bing / Yandex** engine picker
-- ✅ Universal picker (full-size image extraction per engine, ported from the Mac app)
-- ✅ "Bigger of the two" download (full vs thumbnail) with desktop UA + referer
-- ⏳ To port: white-trim, Lanczos upscaler (via `sharp`), fit-to-slide, PPTX/DOCX/TXT
-  export, document import + OCR (Tesseract.js), vocabulary extraction
+- ✅ Universal picker + "bigger of the two" download (full vs thumbnail)
+- ✅ Image processing: white-trim, fit-to-slide pixel sizing, upscaler
+  (Lanczos via `pica`; method dropdown)
+- ✅ Flashcard grid with padding / orientation / labels / selection / retry / remove
+- ✅ **Export PPTX** (OOXML via JSZip) and **Export List** (.txt / .docx)
+- ✅ Drag-and-drop import
+
+Image search/processing/export run with no native modules (pure JS/WASM), so the
+build needs no platform compilation. OCR downloads its language data from a CDN on
+first use (needs internet, which the app uses for image search anyway).
 
 ## Develop
 

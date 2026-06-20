@@ -4,72 +4,139 @@
     <meta charset="utf-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'"
+      content="default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; worker-src 'self' blob:"
     />
-    <title>ClipartBrowser (Windows)</title>
+    <title>ClipartBrowser</title>
     <style>
       * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100vh; }
       body {
-        margin: 0;
         font-family: "Segoe UI", system-ui, sans-serif;
-        height: 100vh;
         display: flex;
         flex-direction: column;
         color: #1f2937;
+        font-size: 13px;
       }
-      #toolbar {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        padding: 8px 12px;
-        border-bottom: 1px solid #e5e7eb;
-        background: #f9fafb;
-      }
-      #toolbar input[type="text"] { flex: 0 0 260px; padding: 6px 8px; }
-      #toolbar select, #toolbar button { padding: 6px 10px; }
-      #main { flex: 1; display: flex; min-height: 0; }
-      webview { flex: 1; border: none; }
-      #picked {
-        width: 280px;
-        border-left: 1px solid #e5e7eb;
-        overflow-y: auto;
-        padding: 10px;
-        background: #fff;
-      }
-      #picked h3 { margin: 0 0 8px; font-size: 14px; }
-      .card {
-        border: 1px solid #e5e7eb;
-        border-radius: 6px;
-        padding: 8px;
-        margin-bottom: 8px;
-        text-align: center;
-      }
-      .card img { max-width: 100%; max-height: 140px; }
-      .card .meta { font-size: 12px; color: #6b7280; margin-top: 4px; }
-      #status {
-        padding: 6px 12px;
-        border-top: 1px solid #e5e7eb;
-        font-size: 12px;
-        color: #6b7280;
-        background: #f9fafb;
-      }
+      button { font: inherit; padding: 5px 10px; border-radius: 6px; border: 1px solid #d1d5db; background: #fff; cursor: pointer; }
+      button:hover:not(:disabled) { background: #f3f4f6; }
+      button:disabled { opacity: 0.45; cursor: default; }
+      button.primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+      input[type="text"], input[type="number"] { font: inherit; padding: 5px 8px; border: 1px solid #d1d5db; border-radius: 6px; }
+      select { font: inherit; padding: 4px 6px; border-radius: 6px; }
+      .bar { display: flex; gap: 10px; align-items: center; padding: 8px 12px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; flex-wrap: wrap; }
+      .seg { display: inline-flex; border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden; }
+      .seg button { border: none; border-radius: 0; padding: 4px 10px; }
+      .seg button.on { background: #2563eb; color: #fff; }
+      .spacer { flex: 1; }
+      .muted { color: #6b7280; }
+
+      #body { flex: 1; display: flex; min-height: 0; }
+      #words { width: 300px; border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; min-height: 0; }
+      #words .head { padding: 10px 12px; }
+      #words h2 { margin: 0 0 2px; font-size: 16px; }
+      #wordAdd { display: flex; gap: 6px; padding: 0 12px 8px; }
+      #wordAdd input { flex: 1; }
+      #wordList { flex: 1; overflow-y: auto; padding: 0 6px 10px; }
+      .word { display: flex; gap: 8px; align-items: center; padding: 6px 8px; border-bottom: 1px solid #f3f4f6; }
+      .word .term { font-weight: 500; }
+      .word .ln { font-size: 11px; color: #9ca3af; }
+
+      #right { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+      #browser-pane { display: none; flex-direction: column; min-height: 0; flex: 1.1; border-bottom: 1px solid #e5e7eb; }
+      #browser-pane.active { display: flex; }
+      #browser-bar { display: flex; gap: 8px; align-items: center; padding: 6px 10px; border-bottom: 1px solid #e5e7eb; }
+      #tabs { flex: 1; display: flex; gap: 6px; overflow-x: auto; }
+      #tabs .tab { padding: 4px 10px; border-radius: 999px; white-space: nowrap; cursor: pointer; color: #6b7280; }
+      #tabs .tab.on { background: #e5e7eb; color: #111827; }
+      webview { flex: 1; }
+
+      #cards-pane { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+      #cards-head { padding: 10px 14px; }
+      #cards-head h2 { margin: 0; font-size: 16px; }
+      #cards { flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; padding: 14px; align-content: start; }
+      .card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px; background: #fff; position: relative; }
+      .card.sel { border-color: #2563eb; box-shadow: 0 0 0 1px #2563eb; }
+      .card .imgwrap { background: #fff; border: 1px solid #f3f4f6; border-radius: 6px; aspect-ratio: 8.5 / 11; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+      .card.land .imgwrap { aspect-ratio: 11 / 8.5; }
+      .card .imgwrap img { max-width: 100%; max-height: 100%; padding: 8px; }
+      .card .w { font-weight: 600; margin-top: 6px; }
+      .card .dims { font-size: 11px; color: #9ca3af; }
+      .card .x { position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; border-radius: 999px; padding: 0; line-height: 1; }
+      .card .retry { position: absolute; top: 6px; left: 6px; width: 24px; height: 24px; border-radius: 999px; padding: 0; line-height: 1; }
+      .empty { color: #9ca3af; text-align: center; margin: auto; padding: 30px; }
+
+      #status { padding: 6px 12px; border-top: 1px solid #e5e7eb; background: #f9fafb; color: #6b7280; display: flex; gap: 8px; align-items: center; }
     </style>
   </head>
   <body>
-    <div id="toolbar">
-      <select id="engine" title="Search engine"></select>
-      <input id="term" type="text" placeholder="Word (e.g. tall)" />
-      <button id="searchBtn">Search</button>
-      <button id="reloadBtn" title="Reload">Reload</button>
+    <div class="bar">
+      <button id="importBtn">📄 Import</button>
+      <button id="pickBtn">🖼 Pick Images</button>
+      <button id="pptxBtn">⬆ Export PPTX</button>
+      <button id="listBtn">≣ Export List</button>
+      <div class="spacer"></div>
+      <span class="muted">File</span>
+      <input id="fileName" type="text" value="Vocabulary Flashcards" style="width: 220px" />
+      <input id="fileInput" type="file" accept=".docx,.pdf,.rtf,.txt,.png,.jpg,.jpeg,.gif,.bmp,.tif,.tiff,.webp,.heic,.heif" style="display: none" />
     </div>
-    <div id="main">
-      <webview id="browser" allowpopups></webview>
-      <div id="picked">
-        <h3>Picked images</h3>
-        <div id="pickedList"></div>
+
+    <div class="bar">
+      <span class="muted">Padding</span>
+      <input id="padding" type="range" min="0" max="72" step="1" value="12" />
+      <input id="paddingNum" type="number" min="0" max="72" value="12" style="width: 56px" /><span class="muted">px</span>
+      <div class="seg" id="orientation">
+        <button data-v="portrait" class="on">Portrait</button>
+        <button data-v="landscape">Landscape</button>
+      </div>
+      <span class="muted">Labels</span>
+      <div class="seg" id="labels">
+        <button data-v="show" class="on">Show</button>
+        <button data-v="hide">Hide</button>
+      </div>
+      <span class="muted">Upscaler</span>
+      <select id="upscaler">
+        <option value="coreImage">Sharpest detail</option>
+        <option value="coreGraphics">Balanced</option>
+        <option value="vImage">Fastest</option>
+        <option value="appKit">Smoothest</option>
+      </select>
+    </div>
+
+    <div id="body">
+      <div id="words">
+        <div class="head">
+          <h2>Words</h2>
+          <div class="muted" id="docName">Import a document to find vocabulary.</div>
+        </div>
+        <div id="wordAdd">
+          <input id="termInput" type="text" placeholder="Add search term" />
+          <button id="addTermBtn">＋</button>
+        </div>
+        <div id="wordList"></div>
+      </div>
+
+      <div id="right">
+        <div id="browser-pane">
+          <div id="browser-bar">
+            <button id="prevTab">‹</button>
+            <div id="tabs"></div>
+            <button id="nextTab">›</button>
+            <select id="engine" title="Search engine"></select>
+            <button id="reloadBtn" title="Reload">⟳</button>
+            <button id="closeBrowser" title="Close">✕</button>
+          </div>
+          <webview id="webview" allowpopups></webview>
+        </div>
+
+        <div id="cards-pane">
+          <div id="cards-head"><h2>Flashcards</h2><div class="muted" id="cardsSub"></div></div>
+          <div id="cards"><div class="empty">Pick images after reviewing words.</div></div>
+        </div>
       </div>
     </div>
-    <div id="status">Pick an engine, search a word, then click an image.</div>
+
+    <div id="status"><span id="statusText">Import a document to find vocabulary words.</span></div>
+
     <script src="renderer.js"></script>
   </body>
 </html>

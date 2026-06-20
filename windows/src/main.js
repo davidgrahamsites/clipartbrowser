@@ -1,5 +1,6 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const path = require("path");
+const fs = require("fs");
 const sizeOf = require("image-size");
 
 // Desktop Chrome UA so the engines serve their full layouts and full-size
@@ -13,15 +14,36 @@ function createWindow() {
     height: 860,
     title: "ClipartBrowser",
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
       webviewTag: true,
-      contextIsolation: true,
-      nodeIntegration: false,
+      nodeIntegration: true,
+      contextIsolation: false,
       sandbox: false,
     },
   });
   win.loadFile(path.join(__dirname, "index.html"));
 }
+
+// Ask the user where to save; returns the chosen path + extension so the
+// renderer can build the right format (e.g. .txt vs .docx).
+ipcMain.handle("pick-save-path", async (_event, { defaultName, filters }) => {
+  const win = BrowserWindow.getFocusedWindow();
+  const { canceled, filePath } = await dialog.showSaveDialog(win, {
+    defaultPath: defaultName,
+    filters,
+  });
+  if (canceled || !filePath) return { canceled: true };
+  return {
+    canceled: false,
+    filePath,
+    name: path.basename(filePath),
+    ext: path.extname(filePath).replace(".", "").toLowerCase(),
+  };
+});
+
+ipcMain.handle("write-file", async (_event, { filePath, base64 }) => {
+  await fs.promises.writeFile(filePath, Buffer.from(base64, "base64"));
+  return { name: path.basename(filePath) };
+});
 
 async function fetchImage(url, referer) {
   if (!url) return null;
