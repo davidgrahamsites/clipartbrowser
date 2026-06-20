@@ -30,6 +30,24 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      # Optional code signing: only enabled when the WINDOWS_CERT_BASE64 secret is
+      # set. Decodes the .pfx and exports CSC_LINK so electron-builder signs.
+      # Without the secret, CSC_LINK stays unset and the build is unsigned.
+      - name: Prepare optional code-signing cert
+        shell: bash
+        env:
+          WINDOWS_CERT_BASE64: ${{ secrets.WINDOWS_CERT_BASE64 }}
+          WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+        run: |
+          if [ -n "$WINDOWS_CERT_BASE64" ]; then
+            echo "$WINDOWS_CERT_BASE64" | base64 --decode > "$RUNNER_TEMP/cert.pfx"
+            echo "CSC_LINK=$RUNNER_TEMP/cert.pfx" >> "$GITHUB_ENV"
+            echo "CSC_KEY_PASSWORD=$WINDOWS_CERT_PASSWORD" >> "$GITHUB_ENV"
+            echo "Code-signing certificate prepared."
+          else
+            echo "No signing certificate provided; building unsigned."
+          fi
+
       - name: Build NSIS installer
         shell: bash
         run: |
@@ -47,11 +65,6 @@ jobs:
           exit "$code"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Optional Windows code signing: add repo secrets WINDOWS_CERT_BASE64
-          # (base64 of a .pfx) and WINDOWS_CERT_PASSWORD to sign automatically.
-          # When unset, electron-builder produces an unsigned installer.
-          CSC_LINK: ${{ secrets.WINDOWS_CERT_BASE64 }}
-          CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
