@@ -1,0 +1,34 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '=== coordination/STATUS.md ===\\n'; tail -n 5 coordination/STATUS.md 2>/dev/null; printf '\\n=== coordination/HANDOFF.md (recent) ===\\n'; tail -n 30 coordination/HANDOFF.md 2>/dev/null"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if grep -qi 'CONFLICT' <(tail -n 3 coordination/STATUS.md 2>/dev/null); then printf '\\u26a0\\ufe0f coordination/STATUS.md shows a CONFLICT \\u2014 resolve before changing code:\\n'; tail -n 3 coordination/STATUS.md; fi"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf 'Coordination reminder: if you changed code, append a coordination/HANDOFF.md entry and update coordination/PARITY.md (Mac changes \\u2192 flip Windows cells to needs-port).\\n'"
+          }
+        ]
+      }
+    ]
+  }
+}
