@@ -1,0 +1,59 @@
+name: Parity check
+
+# When the macOS app (source of truth) changes on main without a matching
+# windows/ change, open/append a GitHub issue so the Windows parity gap is
+# tracked. Porting itself is done by an agent or a human (Swift → JS).
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect Mac-only change
+        id: detect
+        shell: bash
+        run: |
+          base="${{ github.event.before }}"
+          if ! git cat-file -e "${base}^{commit}" 2>/dev/null; then
+            base="HEAD~1"
+          fi
+          files="$(git diff --name-only "$base" HEAD || true)"
+          mac="$(printf '%s\n' "$files" | grep -E '^Sources/' || true)"
+          win="$(printf '%s\n' "$files" | grep -E '^windows/' || true)"
+          if [ -n "$mac" ] && [ -z "$win" ]; then
+            echo "gap=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "files<<EOF"
+              printf '%s\n' "$mac"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "gap=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open or append parity reminder
+        if: steps.detect.outputs.gap == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          title="Windows parity needed after Mac change"
+          body="$(printf 'The macOS app changed on main without a matching windows/ change (commit %s).\n\nChanged Mac files:\n```\n%s\n```\n\nPort to Windows EN (windows/) then Windows ZH (zh-CN), and update coordination/PARITY.md.' "${GITHUB_SHA:0:7}" "${{ steps.detect.outputs.files }}")"
+          num="$(gh issue list --state open --search "$title in:title" --json number -q '.[0].number' || true)"
+          if [ -n "$num" ]; then
+            gh issue comment "$num" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body" || true
+          fi

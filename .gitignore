@@ -12,3 +12,10 @@ debuglog.md
 # Xcode / SwiftPM
 *.xcodeproj
 .swiftpm/
+
+# Local builds (installers/apps kept locally, not committed)
+builds/
+
+# Python
+__pycache__/
+*.pyc

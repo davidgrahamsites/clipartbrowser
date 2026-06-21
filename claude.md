@@ -20,5 +20,18 @@ Build a Mac Apple Silicon app that imports documents containing vocabulary secti
 - Unit tests in `ClipartBrowserTests`.
 - ZIPFoundation is used for `.docx` reading and `.pptx` writing.
 
+## Cross-edition coordination (one-way: Mac → Win-EN → Win-ZH)
+This repo ships three editions: macOS (this Swift app, **the source of truth**),
+Windows EN (`windows/`, `main`), and Windows ZH (`zh-CN` branch). Full protocol in
+`coordination/README.md`.
+- **Before any task:** read `coordination/STATUS.md` (STOP if it says CONFLICT),
+  `coordination/HANDOFF.md` (last ~20 entries), and `coordination/PARITY.md`.
+- **After any change:** append a `coordination/HANDOFF.md` entry; update
+  `coordination/PARITY.md` cells; update `coordination/SCHEMA.md` if a shared
+  contract changed.
+- When you change a Mac feature, set the affected Windows cells in `PARITY.md` to
+  🔧 (needs-port) so the downstream Windows editions know to follow. Never
+  back-port Windows changes into the Mac app.
+
 codex is going to check your work
 
