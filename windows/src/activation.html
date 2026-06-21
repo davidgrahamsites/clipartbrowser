@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
-    <title>Activate ClipartBrowser</title>
+    <title>激活剪贴画浏览器</title>
     <style>
       * { box-sizing: border-box; }
       body { margin: 0; height: 100vh; display: flex; align-items: center; justify-content: center;
-        font-family: "Segoe UI", system-ui, sans-serif; color: #1f2937; background: #f9fafb; }
+        font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", system-ui, sans-serif; color: #1f2937; background: #f9fafb; }
       .card { width: 520px; max-width: 92vw; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
         padding: 28px; text-align: center; }
       h1 { font-size: 20px; margin: 8px 0 4px; }
@@ -24,13 +24,13 @@
   <body>
     <div class="card">
       <div class="lock">🔒</div>
-      <h1>Activate ClipartBrowser</h1>
-      <p>This copy is licensed to one computer. Send the Machine ID below to the developer to receive your activation key.</p>
-      <div>Machine ID</div>
-      <div class="mid"><code id="fp">…</code><button id="copy">Copy</button></div>
-      <textarea id="key" placeholder="Paste your activation key"></textarea>
+      <h1>激活剪贴画浏览器</h1>
+      <p>本副本仅授权一台计算机使用。请将下方的机器 ID 发送给开发者以获取激活密钥。</p>
+      <div>机器 ID</div>
+      <div class="mid"><code id="fp">…</code><button id="copy">复制</button></div>
+      <textarea id="key" placeholder="粘贴您的激活密钥"></textarea>
       <div class="err" id="err"></div>
-      <button class="primary" id="activate">Activate</button>
+      <button class="primary" id="activate">激活</button>
     </div>
     <script>
       const { ipcRenderer } = require("electron");
@@ -44,7 +44,7 @@
         if (!key) return;
         const ok = await ipcRenderer.invoke("license:activate", key);
         if (ok) ipcRenderer.invoke("license:reload");
-        else document.getElementById("err").textContent = "That key isn't valid for this computer.";
+        else document.getElementById("err").textContent = "该密钥对此计算机无效。";
       });
     </script>
   </body>

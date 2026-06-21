@@ -58,3 +58,10 @@ Entry template:
 - Others must adapt: win-zh translate windows/src/activation.html (logic
   identical); set PARITY win-zh ✅. Keygen + private key stay Mac-only, never
   shipped.
+
+### 2026-06-20T21:30:00Z · win-zh · claude
+- Changed: Merged main into zh-CN (licensing) and translated
+  windows/src/activation.html to Simplified Chinese. Logic identical; same
+  embedded public key.
+- Affects: nothing new — license cascade complete (mac → win-en → win-zh).
+- Others must adapt: nothing. PARITY License row win-zh → ✅.
