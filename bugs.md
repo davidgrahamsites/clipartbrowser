@@ -102,3 +102,21 @@ This file records user-reported bugs or workflow problems and the fix applied.
 - Request: Add Bing (and Yandex, which is accessible in China) as image search engines with the same picking mechanics.
 - Implementation: Extended `ImageSearchEngine` with `bing` and `yandex` (+ `BingImagesSearch`/`YandexImagesSearch` URLs). The universal picker JS now also extracts full-size images from Bing's `a.iusc` `m` JSON (`murl`/`turl`) and Yandex's `.serp-item` `data-bem` JSON (`img_href`/`preview`). The engine picker became a compact dropdown (Google/Baidu/Bing/Yandex). Bigger-of-two download, trimming, and upscaling are unchanged.
 - Verification: `swift build`, `swift test`, packaged app launch.
+
+## 2026-06-21 (Windows edition + release + licensing)
+
+### Windows installer build failed in CI (electron-builder)
+- Symptom: `electron-builder` aborted in GitHub Actions. Logs were unreadable via the API until `gh` was authenticated.
+- Causes + fixes (in order found): (1) `⨯ Cannot detect repository by .git/config` → added `repository` to `windows/package.json` and `build.publish: null` + `--publish never`. (2) `Env WIN_CSC_LINK is not correct` from an **empty** code-signing secret → moved signing into a guarded step that only sets `CSC_LINK` when `WINDOWS_CERT_BASE64` is present.
+- Verification: green `windows-build.yml` runs producing the NSIS `.exe`.
+
+### `fetch-builds.sh` deleted a local installer on a network timeout
+- Symptom: After refreshing local installers, `builds/` had only the Chinese `.exe` — the English one was gone.
+- Cause: the script ran `rm -f builds/*.exe` up front, then the English `gh` download timed out, leaving that edition missing (the English build itself was fine — published as the `v0.2.0` release).
+- Fix: download each installer to a temp dir and only `mv` into `builds/` on success, with 3 retries; never delete up front.
+- Verification: re-downloaded the English `v0.2.0` installer into `builds/`; `bash -n`.
+
+### Re-pointed release tag attached a stale asset
+- Symptom: The `v0.2.0-zh` GitHub Release briefly carried both a `0.1.0` and `0.2.0` installer.
+- Cause: the tag first landed on the pre-version-bump commit (built `0.1.0`); re-pointing it triggered a second build while the stale one also published.
+- Fix: deleted the stray `0.1.0` asset with `gh release delete-asset`; release now has only the correct licensed `0.2.0` installer.
