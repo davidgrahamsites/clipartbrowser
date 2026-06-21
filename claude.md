@@ -20,3 +20,5 @@ Build a Mac Apple Silicon app that imports documents containing vocabulary secti
 - Unit tests in `ClipartBrowserTests`.
 - ZIPFoundation is used for `.docx` reading and `.pptx` writing.
 
+codex is going to check your work
+
