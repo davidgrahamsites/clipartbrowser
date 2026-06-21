@@ -39,3 +39,10 @@ Entry template:
   automatically (extraction logic is shared; ZH translates UI only, not content).
 - Affects: nothing — confirms ZH is interface-only (see SCHEMA "Localization").
 - Others must adapt: nothing. win-zh PARITY → ✅. Cascade complete: mac → en → zh.
+
+### 2026-06-20T19:20:00Z · all · claude
+- Changed: Added an "Engineering Principles" section (Think Before Coding,
+  Simplicity First, Surgical Changes, Goal-Driven Execution) to claude.md and
+  windows/CLAUDE.md (global ~/CLAUDE.md already had it).
+- Affects: process only — applies to every edition's agents.
+- Others must adapt: nothing; merged to zh-CN.

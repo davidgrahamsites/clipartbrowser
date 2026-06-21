@@ -26,4 +26,10 @@ Follow `../coordination/README.md`:
 - Keep shared formats (PPTX OOXML, vocabulary rules, engine list, pipeline)
   byte-compatible with `SCHEMA.md`.
 
+## Engineering Principles
+- **Think Before Coding:** Stop, state your assumptions explicitly, and name what you don't understand before writing a single line.
+- **Simplicity First:** Write the minimal code required to solve the problem — nothing more.
+- **Surgical Changes:** Touch only what is necessary and match existing style. Do not refactor speculative areas.
+- **Goal-Driven Execution:** Transform vague tasks into verifiable goals with strict testing criteria.
+
 codex is going to check your work
