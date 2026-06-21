@@ -33,5 +33,11 @@ Windows EN (`windows/`, `main`), and Windows ZH (`zh-CN` branch). Full protocol 
   🔧 (needs-port) so the downstream Windows editions know to follow. Never
   back-port Windows changes into the Mac app.
 
+## Engineering Principles
+- **Think Before Coding:** Stop, state your assumptions explicitly, and name what you don't understand before writing a single line.
+- **Simplicity First:** Write the minimal code required to solve the problem — nothing more.
+- **Surgical Changes:** Touch only what is necessary and match existing style. Do not refactor speculative areas.
+- **Goal-Driven Execution:** Transform vague tasks into verifiable goals with strict testing criteria.
+
 codex is going to check your work
 
