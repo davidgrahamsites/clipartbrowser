@@ -33,3 +33,9 @@ Entry template:
 - Affects: nothing new — keeps the shared vocabulary contract in sync.
 - Others must adapt: win-zh picks this up by merging main into zh-CN (no string
   translation needed; headings are matched lowercased). win-en PARITY → ✅.
+
+### 2026-06-20T19:10:00Z · win-zh · claude
+- Changed: Merged main into zh-CN — the spelling-headings vocab change flows in
+  automatically (extraction logic is shared; ZH translates UI only, not content).
+- Affects: nothing — confirms ZH is interface-only (see SCHEMA "Localization").
+- Others must adapt: nothing. win-zh PARITY → ✅. Cascade complete: mac → en → zh.

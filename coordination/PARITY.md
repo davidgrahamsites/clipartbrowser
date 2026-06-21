@@ -13,7 +13,7 @@ Legend: ✅ done · 🔧 needs-port · — n/a
 | Import .pdf | ✅ | ✅ | ✅ | EN/ZH: pdfjs-dist (best-effort) |
 | Import .rtf / .txt | ✅ | ✅ | ✅ | |
 | Image OCR (lesson plan) | ✅ | ✅ | ✅ | mac: Vision · EN/ZH: tesseract.js (CDN model) |
-| Vocabulary extraction | ✅ | ✅ | 🔧 | +headings "spelling list/words" (2026-06-20); win-zh pending merge |
+| Vocabulary extraction | ✅ | ✅ | ✅ | +headings "spelling list/words" (2026-06-20); cascade complete |
 | Word review + custom terms | ✅ | ✅ | ✅ | |
 | Image search: Google/Baidu/Bing/Yandex | ✅ | ✅ | ✅ | engine list → SCHEMA.md |
 | Universal picker (full-size extraction) | ✅ | ✅ | ✅ | extraction keys → SCHEMA.md |
@@ -28,7 +28,7 @@ Legend: ✅ done · 🔧 needs-port · — n/a
 | Export PPTX | ✅ | ✅ | ✅ | OOXML structure → SCHEMA.md |
 | Export List (.txt / .docx) | ✅ | ✅ | ✅ | |
 | Drag-and-drop import | ✅ | ✅ | ✅ | |
-| UI language | en | en | **zh-Hans** | ZH = EN + translation |
+| UI language | en | en | **zh-Hans** | ZH = **interface-only** translation (UI + engine names + 剪贴画 qualifier); document vocabulary is NOT translated |
 
 ## How to use
 1. When you change the Mac app, edit the affected rows: set `win-en` (and

@@ -54,3 +54,13 @@ size → **upscale-only** (never shrink below source) Lanczos → embed.
 - padding 12 px (0–72), orientation portrait/landscape, labels show/hide,
   upscaler method default = "Sharpest detail" (Lanczos), export base name default
   "Vocabulary Flashcards" (ZH: "词汇卡片").
+
+## Localization (Windows-ZH) — interface only, NOT content
+Win-ZH translates the **interface only**: labels, status messages, engine display
+names (谷歌/百度/必应/Yandex), window title. It does **NOT** translate document
+content. Vocabulary words are extracted and searched **as-is** — English or
+Chinese, whatever the document contains — with only the search qualifier changed
+from `clipart` to `剪贴画`. Dropping an English doc into the ZH app yields the
+English words searched on the chosen engine; there is no auto-translation of the
+word list. (Extraction logic is byte-identical to Win-EN; only UI strings + the
+qualifier differ.)
