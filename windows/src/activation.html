@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'" />
     <title>Activate ClipartBrowser</title>
     <style>
       * { box-sizing: border-box; }
@@ -21,7 +21,7 @@
       .lock { font-size: 40px; }
     </style>
   </head>
-  <body>
+  <body data-invalid="That key isn't valid for this computer.">
     <div class="card">
       <div class="lock">🔒</div>
       <h1>Activate ClipartBrowser</h1>
@@ -32,20 +32,6 @@
       <div class="err" id="err"></div>
       <button class="primary" id="activate">Activate</button>
     </div>
-    <script>
-      const { ipcRenderer } = require("electron");
-      const fpEl = document.getElementById("fp");
-      ipcRenderer.invoke("license:fingerprint").then((fp) => (fpEl.textContent = fp));
-      document.getElementById("copy").addEventListener("click", () => {
-        navigator.clipboard.writeText(fpEl.textContent);
-      });
-      document.getElementById("activate").addEventListener("click", async () => {
-        const key = document.getElementById("key").value.trim();
-        if (!key) return;
-        const ok = await ipcRenderer.invoke("license:activate", key);
-        if (ok) ipcRenderer.invoke("license:reload");
-        else document.getElementById("err").textContent = "That key isn't valid for this computer.";
-      });
-    </script>
+    <script src="activation.js"></script>
   </body>
 </html>

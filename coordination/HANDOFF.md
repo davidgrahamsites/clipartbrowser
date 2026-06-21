@@ -73,3 +73,13 @@ Entry template:
   (Windows/CI/licensing fixes), references.md/context.md/memory.md/agents.md.
 - Affects: docs + local build tooling only.
 - Others must adapt: nothing. restart.md is now the authoritative current-state doc.
+
+### 2026-06-21T06:00:00Z · win-en+win-zh · claude
+- Changed: FIX — Windows activation screen was dead (Machine ID stuck on "…",
+  Copy/Activate did nothing): the inline <script> in activation.html was blocked
+  by CSP. Moved it to external windows/src/activation.js (CSP script-src 'self'),
+  used Electron clipboard, localized error via body[data-invalid]. Bumped → 0.2.1.
+  Verified by headlessly rendering activation.html (real Machine ID shown).
+- Affects: Windows licensing gate only (Mac SwiftUI gate was already fine).
+- Others must adapt: win-zh keep the same external-script structure in the
+  translated activation.html. Release v0.2.1 / v0.2.1-zh.
