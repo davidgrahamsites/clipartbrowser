@@ -72,3 +72,11 @@ Entry template:
   (EN=main, ZH=zh-CN); added scripts/rebuild-all.sh (mac+keygen+windows → builds/).
 - Affects: release/versioning + local build tooling.
 - Others must adapt: tag v0.2.0 (main) and v0.2.0-zh (zh-CN) to publish releases.
+
+### 2026-06-21T05:30:00Z · all · claude
+- Changed: Hardened coordination/fetch-builds.sh (temp-dir + retries; never delete
+  on failure — it had wiped the local EN installer on a timeout). Refreshed docs to
+  current reality: rewrote restart.md, updated claude.md architecture, bugs.md
+  (Windows/CI/licensing fixes), references.md/context.md/memory.md/agents.md.
+- Affects: docs + local build tooling only.
+- Others must adapt: nothing. restart.md is now the authoritative current-state doc.

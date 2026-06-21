@@ -14,11 +14,17 @@ Build a Mac Apple Silicon app that imports documents containing vocabulary secti
 - Keep UI practical for teachers: import, review words, fetch images, review cards, export.
 
 ## Current Architecture
-- Swift Package project.
-- `ClipartBrowser` executable target for the SwiftUI app.
-- `ClipartBrowserCore` library target for testable logic.
-- Unit tests in `ClipartBrowserTests`.
-- ZIPFoundation is used for `.docx` reading and `.pptx` writing.
+- Swift Package project. Targets: `ClipartBrowser` (SwiftUI app),
+  `ClipartBrowserCore` (testable logic), `ClipartKeygen` (Mac-only license keygen
+  app), tests in `ClipartBrowserTests`. ZIPFoundation for `.docx`/`.pptx`.
+- Image search uses an **embedded WKWebView** over Google/Baidu/Bing/Yandex
+  (not a no-key API) with a full-size picker + bigger-of-two download.
+- **Three editions, one repo**: macOS (this app, source of truth), Windows EN
+  (`windows/`, Electron, `main`), Windows ZH (`zh-CN` branch). One-way cascade
+  Mac → Win-EN → Win-ZH; coordination in `coordination/`. See `restart.md`.
+- **Licensing**: Ed25519 one-per-computer activation in all editions; keys issued
+  by `ClipartKeygen.app`; private key in `licensing/private.pem` (gitignored).
+- Full current state, build/release commands, and conventions: **`restart.md`**.
 
 ## Cross-edition coordination (one-way: Mac → Win-EN → Win-ZH)
 This repo ships three editions: macOS (this Swift app, **the source of truth**),

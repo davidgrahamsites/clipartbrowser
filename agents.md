@@ -37,8 +37,15 @@ Verification:
 - Export and inspect the `.pptx`.
 
 ## Coordination Rules
-- Do not replace no-key image providers with Google scraping.
-- Keep Google support as an optional Custom Search API provider if added.
-- Do not rely on command-line tools at runtime.
 - Add tests before changing extraction, trimming, or export behavior.
+- Keep shared formats byte-compatible across editions (`coordination/SCHEMA.md`).
+
+> **UPDATE 2026-06-21:** Image search now uses an **embedded web view** over
+> Google/Baidu/Bing/Yandex (the old "no Google scraping" rule no longer applies).
+> The project is **three editions** (macOS canonical → Windows EN → Windows ZH).
+> Follow the cross-edition protocol in `coordination/README.md`: read
+> `STATUS.md`/`HANDOFF.md`/`PARITY.md` before a task, log after, and never
+> back-port Windows changes to Mac. Edition agent roles (mac-eng / win-en-eng /
+> win-zh-eng / monitor) are described there. Licensing internals (private key,
+> keygen) stay Mac-only and are never shipped.
 
