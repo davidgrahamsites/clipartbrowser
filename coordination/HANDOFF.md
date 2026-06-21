@@ -65,3 +65,10 @@ Entry template:
   embedded public key.
 - Affects: nothing new — license cascade complete (mac → win-en → win-zh).
 - Others must adapt: nothing. PARITY License row win-zh → ✅.
+
+### 2026-06-21T00:30:00Z · all · claude
+- Changed: Bumped Windows version → 0.2.0 (first licensed release). Rewrote
+  coordination/fetch-builds.sh to pull the latest licensed installers from CI
+  (EN=main, ZH=zh-CN); added scripts/rebuild-all.sh (mac+keygen+windows → builds/).
+- Affects: release/versioning + local build tooling.
+- Others must adapt: tag v0.2.0 (main) and v0.2.0-zh (zh-CN) to publish releases.
