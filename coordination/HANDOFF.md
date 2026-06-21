@@ -46,3 +46,15 @@ Entry template:
   windows/CLAUDE.md (global ~/CLAUDE.md already had it).
 - Affects: process only — applies to every edition's agents.
 - Others must adapt: nothing; merged to zh-CN.
+
+### 2026-06-20T21:25:00Z · mac+win-en · claude
+- Changed: Added one-per-computer license activation (Ed25519, machine-locked,
+  hard-block on launch). New: Core LicenseVerifier (+tests), app LicenseManager +
+  ActivationView gate, Mac-only ClipartKeygen.app issuer (Sources/ClipartKeygen,
+  scripts/package-keygen.sh). Win-EN: windows/src/license.js + activation.html +
+  main.js gate. Shared contract in SCHEMA "License" (embedded public key).
+- Affects: SHARED CONTRACT (license format + embedded public key) + app launch
+  flow in every edition.
+- Others must adapt: win-zh translate windows/src/activation.html (logic
+  identical); set PARITY win-zh ✅. Keygen + private key stay Mac-only, never
+  shipped.

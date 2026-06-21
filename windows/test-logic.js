@@ -46,6 +46,21 @@ const engines = require("./src/lib/engines");
   assert.ok(engines.searchURL("bing", "cat").includes("bing.com"), "bing url");
   assert.ok(engines.searchURL("yandex", "cat").includes("yandex.com"), "yandex url");
 
+  // license verify (only when the dev private key is present locally)
+  const fs = require("fs");
+  const cp = require("child_process");
+  const keygen = require("path").join(__dirname, "..", "licensing", "keygen.js");
+  if (fs.existsSync(require("path").join(__dirname, "..", "licensing", "private.pem"))) {
+    const license = require("./src/license");
+    const lic = cp.execSync(`node "${keygen}" issue --mid TEST-1234-5678-9ABC`, { encoding: "utf8" }).trim();
+    assert.ok(license.verify(lic, "TEST-1234-5678-9ABC"), "license verifies for its machine");
+    assert.strictEqual(license.verify(lic, "WRONG-0000-0000-0000"), null, "rejects wrong machine");
+    assert.strictEqual(license.verify("X" + lic.slice(1), "TEST-1234-5678-9ABC"), null, "rejects tampered");
+    console.log("license verify: OK");
+  } else {
+    console.log("license verify: skipped (no private.pem)");
+  }
+
   console.log("ALL LOGIC TESTS PASSED");
 })().catch((e) => {
   console.error("TEST FAILED:", e.message);
