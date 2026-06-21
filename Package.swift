@@ -8,7 +8,8 @@ let package = Package(
         .macOS(.v14)
     ],
     products: [
-        .executable(name: "ClipartBrowser", targets: ["ClipartBrowser"])
+        .executable(name: "ClipartBrowser", targets: ["ClipartBrowser"]),
+        .executable(name: "ClipartKeygen", targets: ["ClipartKeygen"])
     ],
     dependencies: [
         .package(url: "https://github.com/weichsel/ZIPFoundation.git", from: "0.9.20")
@@ -26,6 +27,9 @@ let package = Package(
             resources: [
                 .process("Resources")
             ]
+        ),
+        .executableTarget(
+            name: "ClipartKeygen"
         ),
         .testTarget(
             name: "ClipartBrowserTests",

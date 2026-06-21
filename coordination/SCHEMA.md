@@ -55,6 +55,23 @@ size → **upscale-only** (never shrink below source) Lanczos → embed.
   upscaler method default = "Sharpest detail" (Lanczos), export base name default
   "Vocabulary Flashcards" (ZH: "词汇卡片").
 
+## License (one-per-computer activation)
+- **Scheme:** Ed25519. License = `base64url(payloadJSON) + "." + base64url(sig)`,
+  sig over the `base64url(payloadJSON)` bytes (part before the dot).
+- **Payload:** `{"mid":"<machine fingerprint>","name"?:str,"exp"?:unix-seconds}`.
+- **Verify (every launch, all editions):** Ed25519-verify sig with the embedded
+  public key; require `mid == thisMachineFingerprint` (case-insensitive); if `exp`
+  present, require not expired. Re-verify the stored license each launch so a
+  copied license file fails on another machine.
+- **Embedded public key (identical in all editions):**
+  `T9N5BJyrn6bEWPxSixZ3v8bscvg+g6dSAjm2dkoPOBs=`
+- **Fingerprint:** SHA-256 of (macOS IOPlatformUUID / Windows registry MachineGuid),
+  first 16 hex, grouped `XXXX-XXXX-XXXX-XXXX` uppercase.
+- **Issuer:** the Mac-only **ClipartKeygen.app** (or `licensing/keygen.js`) holds the
+  private key (`licensing/private.pem`, gitignored) and signs a customer's
+  fingerprint. Reference impls: `Sources/ClipartBrowserCore/LicenseVerifier.swift`,
+  `Sources/ClipartBrowser/LicenseManager.swift`, `windows/src/license.js`.
+
 ## Localization (Windows-ZH) — interface only, NOT content
 Win-ZH translates the **interface only**: labels, status messages, engine display
 names (谷歌/百度/必应/Yandex), window title. It does **NOT** translate document

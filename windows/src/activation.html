@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
+    <title>Activate ClipartBrowser</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; height: 100vh; display: flex; align-items: center; justify-content: center;
+        font-family: "Segoe UI", system-ui, sans-serif; color: #1f2937; background: #f9fafb; }
+      .card { width: 520px; max-width: 92vw; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+        padding: 28px; text-align: center; }
+      h1 { font-size: 20px; margin: 8px 0 4px; }
+      p { color: #6b7280; margin: 0 0 18px; }
+      .mid { display: flex; gap: 8px; align-items: center; justify-content: center; margin: 12px 0; }
+      .mid code { font-size: 18px; font-family: ui-monospace, monospace; background: #f3f4f6; padding: 6px 12px; border-radius: 6px; }
+      textarea { width: 100%; height: 70px; font-family: ui-monospace, monospace; padding: 8px; border: 1px solid #d1d5db; border-radius: 8px; resize: vertical; }
+      button { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid #d1d5db; background: #fff; cursor: pointer; }
+      button.primary { background: #2563eb; color: #fff; border-color: #2563eb; margin-top: 12px; }
+      .err { color: #dc2626; font-size: 13px; min-height: 18px; margin-top: 8px; }
+      .lock { font-size: 40px; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="lock">🔒</div>
+      <h1>Activate ClipartBrowser</h1>
+      <p>This copy is licensed to one computer. Send the Machine ID below to the developer to receive your activation key.</p>
+      <div>Machine ID</div>
+      <div class="mid"><code id="fp">…</code><button id="copy">Copy</button></div>
+      <textarea id="key" placeholder="Paste your activation key"></textarea>
+      <div class="err" id="err"></div>
+      <button class="primary" id="activate">Activate</button>
+    </div>
+    <script>
+      const { ipcRenderer } = require("electron");
+      const fpEl = document.getElementById("fp");
+      ipcRenderer.invoke("license:fingerprint").then((fp) => (fpEl.textContent = fp));
+      document.getElementById("copy").addEventListener("click", () => {
+        navigator.clipboard.writeText(fpEl.textContent);
+      });
+      document.getElementById("activate").addEventListener("click", async () => {
+        const key = document.getElementById("key").value.trim();
+        if (!key) return;
+        const ok = await ipcRenderer.invoke("license:activate", key);
+        if (ok) ipcRenderer.invoke("license:reload");
+        else document.getElementById("err").textContent = "That key isn't valid for this computer.";
+      });
+    </script>
+  </body>
+</html>

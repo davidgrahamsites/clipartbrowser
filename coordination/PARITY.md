@@ -28,6 +28,7 @@ Legend: ✅ done · 🔧 needs-port · — n/a
 | Export PPTX | ✅ | ✅ | ✅ | OOXML structure → SCHEMA.md |
 | Export List (.txt / .docx) | ✅ | ✅ | ✅ | |
 | Drag-and-drop import | ✅ | ✅ | ✅ | |
+| License activation (one-per-computer) | ✅ | ✅ | 🔧 | Ed25519 machine-locked; ZH needs activation.html translated. Keygen = Mac-only ClipartKeygen.app |
 | UI language | en | en | **zh-Hans** | ZH = **interface-only** translation (UI + engine names + 剪贴画 qualifier); document vocabulary is NOT translated |
 
 ## How to use

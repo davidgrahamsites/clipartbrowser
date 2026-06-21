@@ -8,8 +8,7 @@ import WebKit
 struct ClipartBrowserApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .frame(minWidth: 980, minHeight: 680)
+            LicensedRootView()
         }
         .commands {
             UpscalerPreviewCommands()
@@ -19,6 +18,80 @@ struct ClipartBrowserApp: App {
             UpscalerPreviewView()
                 .environmentObject(UpscalerPreviewCenter.shared)
                 .frame(minWidth: 760, minHeight: 520)
+        }
+    }
+}
+
+/// Hard-blocks the app behind a one-per-computer license. Shows the activation
+/// screen until a key valid for this machine is entered.
+private struct LicensedRootView: View {
+    @State private var licensed = LicenseManager.isLicensed
+
+    var body: some View {
+        if licensed {
+            ContentView().frame(minWidth: 980, minHeight: 680)
+        } else {
+            ActivationView { licensed = true }
+                .frame(minWidth: 560, minHeight: 380)
+        }
+    }
+}
+
+private struct ActivationView: View {
+    let onActivated: () -> Void
+    @State private var key = ""
+    @State private var error: String?
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Image(systemName: "lock.shield")
+                .font(.system(size: 44))
+                .foregroundStyle(.tint)
+            Text("Activate ClipartBrowser")
+                .font(.title2.bold())
+            Text("This copy is licensed to one computer. Send the Machine ID below to the developer to receive your activation key.")
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: 440)
+
+            GroupBox("Machine ID") {
+                HStack {
+                    Text(LicenseManager.machineFingerprint)
+                        .font(.system(.title3, design: .monospaced))
+                        .textSelection(.enabled)
+                    Spacer()
+                    Button("Copy") {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(LicenseManager.machineFingerprint, forType: .string)
+                    }
+                }
+                .padding(6)
+            }
+            .frame(maxWidth: 440)
+
+            TextField("Paste your activation key", text: $key, axis: .vertical)
+                .textFieldStyle(.roundedBorder)
+                .lineLimit(2...4)
+                .frame(maxWidth: 440)
+                .onSubmit(activate)
+
+            if let error {
+                Text(error).font(.caption).foregroundStyle(.red)
+            }
+
+            Button("Activate", action: activate)
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
+                .disabled(key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        }
+        .padding(32)
+    }
+
+    private func activate() {
+        if LicenseManager.activate(key) {
+            onActivated()
+        } else {
+            error = "That key isn't valid for this computer."
         }
     }
 }

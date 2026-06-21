@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const sizeOf = require("image-size");
+const license = require("./license");
 
 // Desktop Chrome UA so the engines serve their full layouts and full-size
 // images (the same reason the macOS app sets a desktop Safari UA).
@@ -20,8 +21,24 @@ function createWindow() {
       sandbox: false,
     },
   });
-  win.loadFile(path.join(__dirname, "index.html"));
+  // Hard-block behind the one-per-computer license.
+  const page = license.isLicensed(app) ? "index.html" : "activation.html";
+  win.loadFile(path.join(__dirname, page));
 }
+
+// Licensing IPC (used by activation.html).
+ipcMain.handle("license:fingerprint", () => license.machineFingerprint());
+ipcMain.handle("license:activate", (_event, key) => {
+  if (license.verify(key, license.machineFingerprint())) {
+    license.saveKey(app, key);
+    return true;
+  }
+  return false;
+});
+ipcMain.handle("license:reload", () => {
+  const win = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];
+  if (win) win.loadFile(path.join(__dirname, "index.html"));
+});
 
 // Ask the user where to save; returns the chosen path + extension so the
 // renderer can build the right format (e.g. .txt vs .docx).
