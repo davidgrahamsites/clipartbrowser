@@ -58,3 +58,10 @@ Entry template:
 - Others must adapt: win-zh translate windows/src/activation.html (logic
   identical); set PARITY win-zh ✅. Keygen + private key stay Mac-only, never
   shipped.
+
+### 2026-06-21T00:30:00Z · all · claude
+- Changed: Bumped Windows version → 0.2.0 (first licensed release). Rewrote
+  coordination/fetch-builds.sh to pull the latest licensed installers from CI
+  (EN=main, ZH=zh-CN); added scripts/rebuild-all.sh (mac+keygen+windows → builds/).
+- Affects: release/versioning + local build tooling.
+- Others must adapt: tag v0.2.0 (main) and v0.2.0-zh (zh-CN) to publish releases.

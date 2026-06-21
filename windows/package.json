@@ -1,6 +1,6 @@
 {
   "name": "clipartbrowser-windows",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Windows (Electron) edition of ClipartBrowser",
   "author": "ClipartBrowser",
   "license": "MIT",
