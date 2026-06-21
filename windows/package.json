@@ -1,7 +1,7 @@
 {
   "name": "clipartbrowser-windows",
   "version": "0.1.0",
-  "description": "Windows (Electron) edition of ClipartBrowser",
+  "description": "Windows (Electron) edition of ClipartBrowser — Simplified Chinese",
   "author": "ClipartBrowser",
   "license": "MIT",
   "repository": {
@@ -14,8 +14,8 @@
     "dist": "electron-builder --win nsis --publish never"
   },
   "build": {
-    "appId": "local.clipartbrowser.windows",
-    "productName": "ClipartBrowser",
+    "appId": "local.clipartbrowser.windows.zh",
+    "productName": "ClipartBrowser CN",
     "directories": {
       "output": "dist"
     },

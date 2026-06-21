@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https: data: blob:; worker-src 'self' blob:"
     />
-    <title>ClipartBrowser</title>
+    <title>剪贴画浏览器</title>
     <style>
       * { box-sizing: border-box; }
       html, body { margin: 0; height: 100vh; }
       body {
-        font-family: "Segoe UI", system-ui, sans-serif;
+        font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", system-ui, sans-serif;
         display: flex;
         flex-direction: column;
         color: #1f2937;
@@ -70,46 +70,46 @@
   </head>
   <body>
     <div class="bar">
-      <button id="importBtn">📄 Import</button>
-      <button id="pickBtn">🖼 Pick Images</button>
-      <button id="pptxBtn">⬆ Export PPTX</button>
-      <button id="listBtn">≣ Export List</button>
+      <button id="importBtn">📄 导入</button>
+      <button id="pickBtn">🖼 选择图片</button>
+      <button id="pptxBtn">⬆ 导出 PPTX</button>
+      <button id="listBtn">≣ 导出清单</button>
       <div class="spacer"></div>
-      <span class="muted">File</span>
-      <input id="fileName" type="text" value="Vocabulary Flashcards" style="width: 220px" />
+      <span class="muted">文件名</span>
+      <input id="fileName" type="text" value="词汇卡片" style="width: 220px" />
       <input id="fileInput" type="file" accept=".docx,.pdf,.rtf,.txt,.png,.jpg,.jpeg,.gif,.bmp,.tif,.tiff,.webp,.heic,.heif" style="display: none" />
     </div>
 
     <div class="bar">
-      <span class="muted">Padding</span>
+      <span class="muted">边距</span>
       <input id="padding" type="range" min="0" max="72" step="1" value="12" />
-      <input id="paddingNum" type="number" min="0" max="72" value="12" style="width: 56px" /><span class="muted">px</span>
+      <input id="paddingNum" type="number" min="0" max="72" value="12" style="width: 56px" /><span class="muted">像素</span>
       <div class="seg" id="orientation">
-        <button data-v="portrait" class="on">Portrait</button>
-        <button data-v="landscape">Landscape</button>
+        <button data-v="portrait" class="on">纵向</button>
+        <button data-v="landscape">横向</button>
       </div>
-      <span class="muted">Labels</span>
+      <span class="muted">标签</span>
       <div class="seg" id="labels">
-        <button data-v="show" class="on">Show</button>
-        <button data-v="hide">Hide</button>
+        <button data-v="show" class="on">显示</button>
+        <button data-v="hide">隐藏</button>
       </div>
-      <span class="muted">Upscaler</span>
+      <span class="muted">放大方式</span>
       <select id="upscaler">
-        <option value="coreImage">Sharpest detail</option>
-        <option value="coreGraphics">Balanced</option>
-        <option value="vImage">Fastest</option>
-        <option value="appKit">Smoothest</option>
+        <option value="coreImage">最清晰</option>
+        <option value="coreGraphics">平衡</option>
+        <option value="vImage">最快</option>
+        <option value="appKit">最平滑</option>
       </select>
     </div>
 
     <div id="body">
       <div id="words">
         <div class="head">
-          <h2>Words</h2>
-          <div class="muted" id="docName">Import a document to find vocabulary.</div>
+          <h2>词语</h2>
+          <div class="muted" id="docName">导入文档以查找词汇。</div>
         </div>
         <div id="wordAdd">
-          <input id="termInput" type="text" placeholder="Add search term" />
+          <input id="termInput" type="text" placeholder="添加搜索词" />
           <button id="addTermBtn">＋</button>
         </div>
         <div id="wordList"></div>
@@ -118,26 +118,26 @@
       <div id="right">
         <div id="browser-pane">
           <div id="browser-bar">
-            <button id="prevTab">‹</button>
+            <button id="prevTab" title="上一个">‹</button>
             <div id="tabs"></div>
-            <button id="nextTab">›</button>
-            <select id="engine" title="Search engine"></select>
-            <button id="zoomOut" title="Show more images">－</button>
+            <button id="nextTab" title="下一个">›</button>
+            <select id="engine" title="搜索引擎"></select>
+            <button id="zoomOut" title="显示更多图片">－</button>
             <span id="zoomPct" class="muted" style="width: 38px; text-align: center">60%</span>
-            <button id="zoomIn" title="Show fewer, larger">＋</button>
-            <button id="reloadBtn" title="Reload">⟳</button>
-            <button id="closeBrowser" title="Close">✕</button>
+            <button id="zoomIn" title="显示更少更大的图片">＋</button>
+            <button id="reloadBtn" title="刷新">⟳</button>
+            <button id="closeBrowser" title="关闭">✕</button>
           </div>
           <webview id="webview" allowpopups></webview>
         </div>
 
         <div id="cards-pane">
           <div id="cards-head" style="display: flex; align-items: center; gap: 10px">
-            <div><h2>Flashcards</h2><div class="muted" id="cardsSub"></div></div>
+            <div><h2>卡片</h2><div class="muted" id="cardsSub"></div></div>
             <div class="spacer"></div>
-            <button id="compareBtn" disabled title="Compare upscaler methods for the selected card">Compare upscalers</button>
+            <button id="compareBtn" disabled title="为所选卡片比较放大方式">比较放大方式</button>
           </div>
-          <div id="cards"><div class="empty">Pick images after reviewing words.</div></div>
+          <div id="cards"><div class="empty">审阅词语后选择图片。</div></div>
         </div>
       </div>
     </div>
@@ -145,23 +145,23 @@
     <div id="preview-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; align-items: center; justify-content: center">
       <div style="background: #fff; width: 90%; height: 88%; border-radius: 10px; display: flex; flex-direction: column; overflow: hidden">
         <div class="bar" style="border-bottom: 1px solid #e5e7eb">
-          <strong>Upscaler Preview</strong>
+          <strong>放大预览</strong>
           <span class="muted" id="previewWord"></span>
           <div class="spacer"></div>
-          <span class="muted">Zoom</span>
+          <span class="muted">缩放</span>
           <select id="previewZoom">
-            <option value="fit">Fit</option>
+            <option value="fit">适应</option>
             <option value="1">100%</option>
             <option value="2">200%</option>
             <option value="4">400%</option>
           </select>
-          <button id="previewClose">Close</button>
+          <button id="previewClose">关闭</button>
         </div>
         <div id="previewGrid" style="flex: 1; overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; padding: 16px; align-content: start"></div>
       </div>
     </div>
 
-    <div id="status"><span id="statusText">Import a document to find vocabulary words.</span></div>
+    <div id="status"><span id="statusText">导入文档以查找词汇。</span></div>
 
     <script src="renderer.js"></script>
   </body>

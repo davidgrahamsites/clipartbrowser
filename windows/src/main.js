@@ -12,7 +12,7 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 1280,
     height: 860,
-    title: "ClipartBrowser",
+    title: "剪贴画浏览器",
     webPreferences: {
       webviewTag: true,
       nodeIntegration: true,

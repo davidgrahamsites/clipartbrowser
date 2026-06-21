@@ -13,15 +13,14 @@ const USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
 const state = {
-  words: [], // {term, sourceLine, included}
-  cards: [], // {id, word, dataURL, base64, ext, pixelWidth, pixelHeight, sourceDataURL, source}
+  words: [],
+  cards: [],
   docName: null,
   padding: 12,
   orientation: "portrait",
   showLabels: true,
   upscaler: "coreImage",
   engine: localStorage.getItem("engine") || "google",
-  // pick session
   tabs: [],
   tabIndex: 0,
   browsing: false,
@@ -33,10 +32,10 @@ const state = {
 };
 
 const METHODS = [
-  { id: "coreImage", name: "Sharpest detail" },
-  { id: "coreGraphics", name: "Balanced" },
-  { id: "vImage", name: "Fastest" },
-  { id: "appKit", name: "Smoothest" },
+  { id: "coreImage", name: "最清晰" },
+  { id: "coreGraphics", name: "平衡" },
+  { id: "vImage", name: "最快" },
+  { id: "appKit", name: "最平滑" },
 ];
 
 let nextId = 1;
@@ -54,17 +53,15 @@ function settingsForProc() {
   };
 }
 
-// ---------- Words ----------
+// ---------- 词语 ----------
 function renderWords() {
-  $("docName").textContent = state.docName
-    ? state.docName
-    : "Import a document to find vocabulary.";
+  $("docName").textContent = state.docName ? state.docName : "导入文档以查找词汇。";
   const list = $("wordList");
   list.innerHTML = "";
   if (state.words.length === 0) {
     const d = document.createElement("div");
     d.className = "empty";
-    d.textContent = "No words yet.";
+    d.textContent = "暂无词语。";
     list.appendChild(d);
     return;
   }
@@ -79,7 +76,7 @@ function renderWords() {
     });
     const meta = document.createElement("div");
     meta.innerHTML = `<div class="term">${escapeHtml(w.term)}</div><div class="ln">${
-      w.sourceLine > 0 ? "Line " + w.sourceLine : "Manual"
+      w.sourceLine > 0 ? "第 " + w.sourceLine + " 行" : "手动"
     }</div>`;
     row.appendChild(cb);
     row.appendChild(meta);
@@ -95,18 +92,18 @@ function selectedWords() {
   return state.words.filter((w) => w.included).map((w) => w.term);
 }
 
-// ---------- Import ----------
+// ---------- 导入 ----------
 async function importFile(file) {
   if (!file) return;
   if (!extract.isSupported(file.name)) {
-    setStatus(`Unsupported file type: ${file.name}`);
+    setStatus(`不支持的文件类型：${file.name}`);
     return;
   }
   state.importing = true;
-  setStatus(`Importing ${file.name}...`);
+  setStatus(`正在导入 ${file.name}……`);
   try {
     const text = await extract.extractText(file, (p) =>
-      setStatus(`Reading ${file.name}... ${Math.round(p * 100)}%`)
+      setStatus(`正在读取 ${file.name}…… ${Math.round(p * 100)}%`)
     );
     const candidates = vocabulary.extractCandidates(text);
     state.docName = file.name;
@@ -115,17 +112,17 @@ async function importFile(file) {
     updateButtons();
     setStatus(
       candidates.length
-        ? `Found ${candidates.length} vocabulary words. Review, then Pick Images.`
-        : "No vocabulary section detected. Add terms manually."
+        ? `找到 ${candidates.length} 个词汇。请审阅后选择图片。`
+        : "未检测到词汇部分，请手动添加。"
     );
   } catch (err) {
-    setStatus(`Could not import ${file.name}: ${err.message}`);
+    setStatus(`无法导入 ${file.name}：${err.message}`);
   } finally {
     state.importing = false;
   }
 }
 
-// ---------- Image browser / picking ----------
+// ---------- 图片浏览 / 选择 ----------
 function currentTab() {
   return state.tabs[state.tabIndex];
 }
@@ -141,7 +138,7 @@ function renderTabs() {
       state.tabIndex = i;
       renderTabs();
       loadCurrent();
-      setStatus(`Choose an image for ${t.word}.`);
+      setStatus(`为 ${t.word} 选择图片。`);
     });
     tabs.appendChild(el);
   });
@@ -166,7 +163,7 @@ function startPicking() {
   $("browser-pane").classList.add("active");
   renderTabs();
   loadCurrent();
-  setStatus(`Choose an image for ${currentTab().word}.`);
+  setStatus(`为 ${currentTab().word} 选择图片。`);
 }
 
 function closeBrowser() {
@@ -179,7 +176,7 @@ function moveTab(delta) {
   state.tabIndex = next;
   renderTabs();
   loadCurrent();
-  setStatus(`Choose an image for ${currentTab().word}.`);
+  setStatus(`为 ${currentTab().word} 选择图片。`);
 }
 
 function advanceAfterImport() {
@@ -187,9 +184,9 @@ function advanceAfterImport() {
     state.tabIndex += 1;
     renderTabs();
     loadCurrent();
-    setStatus(`Choose an image for ${currentTab().word}.`);
+    setStatus(`为 ${currentTab().word} 选择图片。`);
   } else {
-    setStatus(`Picked ${state.cards.length} images. Review cards before exporting.`);
+    setStatus(`已选择 ${state.cards.length} 张图片。导出前请审阅卡片。`);
   }
 }
 
@@ -199,7 +196,7 @@ async function handlePick(pick) {
   if (!tab) return;
   const word = tab.word;
   state.importing = true;
-  setStatus(`Importing image for ${word}...`);
+  setStatus(`正在为 ${word} 导入图片……`);
   try {
     const dl = await ipcRenderer.invoke("download-bigger", {
       imageURL: pick.imageURL,
@@ -207,17 +204,17 @@ async function handlePick(pick) {
       referer: pick.pageURL,
     });
     if (!dl) {
-      setStatus(`Could not download image for ${word} — try another.`);
+      setStatus(`无法下载 ${word} 的图片，请尝试其他。`);
       return;
     }
     const proc = await imageproc.processPicked(dl.dataURL, settingsForProc(), state.upscaler);
     upsertCard(word, proc, pick);
     renderCards();
     updateButtons();
-    setStatus(`Added ${word} — ${proc.pixelWidth}×${proc.pixelHeight}px.`);
+    setStatus(`已添加 ${word} —— ${proc.pixelWidth}×${proc.pixelHeight} 像素。`);
     advanceAfterImport();
   } catch (err) {
-    setStatus(`Could not import ${word}: ${err.message}`);
+    setStatus(`无法导入 ${word}：${err.message}`);
   } finally {
     state.importing = false;
   }
@@ -240,15 +237,15 @@ function upsertCard(word, proc, pick) {
   else state.cards.push(card);
 }
 
-// ---------- Flashcards ----------
+// ---------- 卡片 ----------
 function renderCards() {
   const cards = $("cards");
-  $("cardsSub").textContent = `${state.orientation === "landscape" ? "Landscape" : "Portrait"} letter export, ${state.padding} px padding, labels ${state.showLabels ? "on" : "off"}`;
+  $("cardsSub").textContent = `${state.orientation === "landscape" ? "横向" : "纵向"} Letter 导出，边距 ${state.padding} 像素，标签${state.showLabels ? "显示" : "隐藏"}`;
   cards.innerHTML = "";
   if (state.cards.length === 0) {
     const d = document.createElement("div");
     d.className = "empty";
-    d.textContent = "Pick images after reviewing words.";
+    d.textContent = "审阅词语后选择图片。";
     cards.appendChild(d);
     return;
   }
@@ -270,7 +267,7 @@ function renderCards() {
     const remove = document.createElement("button");
     remove.className = "x";
     remove.textContent = "🗑";
-    remove.title = "Remove";
+    remove.title = "移除";
     remove.addEventListener("click", (e) => {
       e.stopPropagation();
       state.cards = state.cards.filter((x) => x.id !== c.id);
@@ -282,7 +279,7 @@ function renderCards() {
     const retry = document.createElement("button");
     retry.className = "retry";
     retry.textContent = "↻";
-    retry.title = "Find a different image";
+    retry.title = "更换图片";
     retry.addEventListener("click", (e) => {
       e.stopPropagation();
       retryWord(c.word);
@@ -296,7 +293,7 @@ function renderCards() {
 
     const dims = document.createElement("div");
     dims.className = "dims";
-    dims.textContent = `${c.pixelWidth}×${c.pixelHeight}px`;
+    dims.textContent = `${c.pixelWidth}×${c.pixelHeight} 像素`;
     el.appendChild(dims);
 
     cards.appendChild(el);
@@ -311,10 +308,10 @@ function retryWord(word) {
   $("browser-pane").classList.add("active");
   renderTabs();
   loadCurrent();
-  setStatus(`Choose a replacement image for ${word}.`);
+  setStatus(`为 ${word} 选择替换图片。`);
 }
 
-// ---------- Export ----------
+// ---------- 导出 ----------
 async function exportPPTX() {
   if (state.cards.length === 0) return;
   try {
@@ -322,8 +319,8 @@ async function exportPPTX() {
       defaultName: `${baseName()}.pptx`,
       filters: [{ name: "PowerPoint", extensions: ["pptx"] }],
     });
-    if (pick.canceled) return setStatus("Export cancelled.");
-    setStatus("Building PPTX...");
+    if (pick.canceled) return setStatus("已取消导出。");
+    setStatus("正在生成 PPTX……");
     const slides = state.cards.map((c) => ({
       word: c.word,
       imageBase64: c.base64,
@@ -337,9 +334,9 @@ async function exportPPTX() {
       showsTextLabel: state.showLabels,
     });
     const res = await ipcRenderer.invoke("write-file", { filePath: pick.filePath, base64 });
-    setStatus(`Exported ${res.name}.`);
+    setStatus(`已导出 ${res.name}。`);
   } catch (err) {
-    setStatus(`Could not export PPTX: ${err.message}`);
+    setStatus(`无法导出 PPTX：${err.message}`);
   }
 }
 
@@ -348,30 +345,30 @@ async function exportList() {
   const words = state.cards.map((c) => c.word);
   try {
     const pick = await ipcRenderer.invoke("pick-save-path", {
-      defaultName: `${baseName()} Word List.txt`,
+      defaultName: `${baseName()} 词汇清单.txt`,
       filters: [
-        { name: "Text", extensions: ["txt"] },
+        { name: "文本", extensions: ["txt"] },
         { name: "Word", extensions: ["docx"] },
       ],
     });
-    if (pick.canceled) return setStatus("Export cancelled.");
+    if (pick.canceled) return setStatus("已取消导出。");
     const base64 =
       pick.ext === "docx"
         ? await wordlist.makeDOCX(words)
         : Buffer.from(wordlist.text(words), "utf8").toString("base64");
     const res = await ipcRenderer.invoke("write-file", { filePath: pick.filePath, base64 });
-    setStatus(`Exported ${res.name}.`);
+    setStatus(`已导出 ${res.name}。`);
   } catch (err) {
-    setStatus(`Could not export list: ${err.message}`);
+    setStatus(`无法导出清单：${err.message}`);
   }
 }
 
 function baseName() {
   const v = $("fileName").value.trim();
-  return v || "Vocabulary Flashcards";
+  return v || "词汇卡片";
 }
 
-// ---------- Buttons enable/disable ----------
+// ---------- 按钮状态 ----------
 function updateButtons() {
   $("pickBtn").disabled = selectedWords().length === 0;
   $("pptxBtn").disabled = state.cards.length === 0;
@@ -379,13 +376,13 @@ function updateButtons() {
   $("compareBtn").disabled = state.cards.length === 0;
 }
 
-// ---------- Browser zoom ----------
+// ---------- 浏览缩放 ----------
 function applyZoom() {
   $("zoomPct").textContent = Math.round(state.browserZoom * 100) + "%";
   try {
     $("webview").setZoomFactor(state.browserZoom);
   } catch (e) {
-    /* not ready yet */
+    /* 尚未就绪 */
   }
 }
 
@@ -395,18 +392,18 @@ function nudgeZoom(delta) {
   applyZoom();
 }
 
-// ---------- Upscaler preview (compare methods) ----------
+// ---------- 放大预览（比较方式） ----------
 async function openPreview() {
   const card = state.cards.find((c) => c.id === state.selectedCardId) || state.cards[state.cards.length - 1];
   if (!card) return;
   $("previewWord").textContent = `"${card.word}"`;
   $("preview-overlay").style.display = "flex";
-  $("previewGrid").innerHTML = '<div class="muted">Rendering…</div>';
+  $("previewGrid").innerHTML = '<div class="muted">正在渲染……</div>';
   try {
     const img = await imageproc.loadImage(card.sourceDataURL);
     const src = imageproc.canvasFromImage(img);
     const target = imageproc.fittedPixelSize(src.width, src.height, settingsForProc());
-    const panels = [{ name: "Original", canvas: src }];
+    const panels = [{ name: "原图", canvas: src }];
     for (const m of METHODS) {
       const up = await imageproc.upscale(src, target.width, target.height, m.id);
       panels.push({ name: m.name, canvas: up });
@@ -414,7 +411,7 @@ async function openPreview() {
     state.previewPanels = panels;
     renderPreviewPanels();
   } catch (e) {
-    $("previewGrid").innerHTML = `<div class="muted">Could not render: ${e.message}</div>`;
+    $("previewGrid").innerHTML = `<div class="muted">无法渲染：${e.message}</div>`;
   }
 }
 
@@ -444,13 +441,13 @@ function renderPreviewPanels() {
     cell.appendChild(t);
     const d = document.createElement("div");
     d.className = "dims";
-    d.textContent = `${p.canvas.width}×${p.canvas.height}px`;
+    d.textContent = `${p.canvas.width}×${p.canvas.height} 像素`;
     cell.appendChild(d);
     grid.appendChild(cell);
   });
 }
 
-// ---------- Wiring ----------
+// ---------- 初始化 ----------
 function initEngineSelect() {
   const sel = $("engine");
   engines.ALL.forEach((e) => {
@@ -541,7 +538,6 @@ function init() {
 
   initEngineSelect();
 
-  // Drag and drop import
   document.body.addEventListener("dragover", (e) => e.preventDefault());
   document.body.addEventListener("drop", (e) => {
     e.preventDefault();

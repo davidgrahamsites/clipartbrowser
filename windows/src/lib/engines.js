@@ -1,13 +1,13 @@
 // Image search engines, mirroring the macOS ImageSearchEngine enum.
 const ALL = [
-  { id: "google", name: "Google" },
-  { id: "baidu", name: "Baidu" },
-  { id: "bing", name: "Bing" },
+  { id: "google", name: "谷歌" },
+  { id: "baidu", name: "百度" },
+  { id: "bing", name: "必应" },
   { id: "yandex", name: "Yandex" },
 ];
 
 function searchURL(engine, term) {
-  const q = encodeURIComponent(`${term} clipart`);
+  const q = encodeURIComponent(`${term} 剪贴画`);
   switch (engine) {
     case "baidu":
       return `https://image.baidu.com/search/index?tn=baiduimage&ie=utf-8&word=${q}`;
