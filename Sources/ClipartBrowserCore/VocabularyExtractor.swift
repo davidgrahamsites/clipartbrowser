@@ -64,6 +64,8 @@ private extension VocabularyExtractor {
         "key vocabulary",
         "key words",
         "keywords",
+        "spelling list",
+        "spelling words",
         "terms to know",
         "vocab",
         "vocabulary",

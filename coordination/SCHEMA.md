@@ -7,8 +7,8 @@ flip the PARITY rows.
 
 ## Vocabulary extraction
 - Heading words (start a vocab section): key terms, key vocabulary, key words,
-  keywords, terms to know, vocab, vocabulary, vocabulary list, vocabulary terms,
-  vocabulary words, word bank, words to know.
+  keywords, spelling list, spelling words, terms to know, vocab, vocabulary,
+  vocabulary list, vocabulary terms, vocabulary words, word bank, words to know.
 - Stop headings (end a section): activity, answer key, comprehension, discussion,
   exercise, homework, key sentences, lesson, learning objectives, practice,
   questions, reading, review, weekly activity suggestions, worksheet, writing.

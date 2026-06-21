@@ -13,7 +13,7 @@ Legend: ✅ done · 🔧 needs-port · — n/a
 | Import .pdf | ✅ | ✅ | ✅ | EN/ZH: pdfjs-dist (best-effort) |
 | Import .rtf / .txt | ✅ | ✅ | ✅ | |
 | Image OCR (lesson plan) | ✅ | ✅ | ✅ | mac: Vision · EN/ZH: tesseract.js (CDN model) |
-| Vocabulary extraction | ✅ | ✅ | ✅ | shared rules → SCHEMA.md |
+| Vocabulary extraction | ✅ | ✅ | 🔧 | +headings "spelling list/words" (2026-06-20); win-zh pending merge |
 | Word review + custom terms | ✅ | ✅ | ✅ | |
 | Image search: Google/Baidu/Bing/Yandex | ✅ | ✅ | ✅ | engine list → SCHEMA.md |
 | Universal picker (full-size extraction) | ✅ | ✅ | ✅ | extraction keys → SCHEMA.md |
