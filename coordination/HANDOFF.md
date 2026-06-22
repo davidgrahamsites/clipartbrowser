@@ -90,3 +90,17 @@ Entry template:
 - Affects: Windows licensing gate only (Mac SwiftUI gate was already fine).
 - Others must adapt: win-zh keep the same external-script structure in the
   translated activation.html. Release v0.2.1 / v0.2.1-zh.
+
+### 2026-06-22T02:00:00Z · win-zh · claude
+- Changed: Ported both 2026-06-22 fixes from `main` to zh-CN:
+  (1) title-like vocabulary heading detection — brought
+  windows/src/lib/vocabulary.js, windows/test-logic.js,
+  Sources/ClipartBrowserCore/VocabularyExtractor.swift, and its tests over from
+  main (logic-only, untranslated → byte-identical). (2) per-edition license
+  isolation — added top-level `productName: "ClipartBrowser CN"` to
+  windows/package.json so ZH uses `%APPDATA%/ClipartBrowser CN` (its own license
+  store) instead of colliding with EN. Bumped → 0.2.2.
+- Affects: vocabulary-extraction behavior + ZH runtime userData/license path.
+- Others must adapt: nothing downstream. PARITY win-zh set ✅ for both rows. ZH
+  installs that were "activated" only because they read EN's shared license will
+  prompt once on next launch (same machine key works).

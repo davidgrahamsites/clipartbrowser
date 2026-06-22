@@ -47,7 +47,20 @@ function normalizedHeading(line) {
 }
 
 function isVocabularyHeading(line) {
-  return HEADING_SET.has(normalizedHeading(line));
+  const normalized = normalizedHeading(line);
+  if (HEADING_SET.has(normalized)) return true;
+  // Also accept short, title-like lines that END WITH a known heading phrase,
+  // e.g. "Unit 5 Vocabulary" or "Week 3 Spelling Words". The part before the
+  // phrase must be a light qualifier (≤2 words, or containing a number) so we
+  // don't match ordinary sentences that merely end in "vocabulary".
+  return [...HEADING_WORDS]
+    .sort((a, b) => b.length - a.length)
+    .some((heading) => {
+      if (!normalized.endsWith(" " + heading)) return false;
+      const prefix = normalized.slice(0, normalized.length - heading.length).trim();
+      const prefixWords = prefix.split(/\s+/).filter(Boolean);
+      return prefixWords.length <= 2 || /\d/.test(prefix);
+    });
 }
 
 function isLikelySectionHeading(line) {

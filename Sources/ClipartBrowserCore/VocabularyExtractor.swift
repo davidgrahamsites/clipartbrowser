@@ -176,7 +176,21 @@ private extension VocabularyExtractor {
 
     static func isVocabularyHeading(_ line: String) -> Bool {
         let normalized = normalizedHeading(line)
-        return headingWords.contains(normalized)
+        if headingWords.contains(normalized) { return true }
+        // Also accept short, title-like lines that END WITH a known heading
+        // phrase, e.g. "Unit 5 Vocabulary" or "Week 3 Spelling Words". To avoid
+        // matching ordinary sentences that merely end in "vocabulary", the part
+        // before the phrase must be a light qualifier: at most two words, or
+        // containing a number (Unit 5, Week 3, Lesson 2, ...).
+        return headingWords
+            .sorted { $0.count > $1.count }
+            .contains { heading in
+                guard normalized.hasSuffix(" " + heading) else { return false }
+                let prefix = String(normalized.dropLast(heading.count))
+                    .trimmingCharacters(in: .whitespaces)
+                let prefixWords = prefix.split(whereSeparator: \.isWhitespace)
+                return prefixWords.count <= 2 || prefix.contains(where: \.isNumber)
+            }
     }
 
     static func isLikelySectionHeading(_ line: String) -> Bool {

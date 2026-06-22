@@ -17,6 +17,21 @@ const engines = require("./src/lib/engines");
   const inline = vocabulary.extractCandidates("Key Words: sun, hot, beach").map((c) => c.term);
   assert.deepStrictEqual(inline, ["sun", "hot", "beach"], "inline vocab");
 
+  // title-like heading with a qualifier ("Unit 5 Vocabulary", "Week 3 Spelling Words")
+  const titled = vocabulary
+    .extractCandidates("Unit 5 Vocabulary\ntall\nshort\nhappy")
+    .map((c) => c.term);
+  assert.deepStrictEqual(titled, ["tall", "short", "happy"], "title-like vocab heading");
+  const spelling = vocabulary
+    .extractCandidates("Week 3 Spelling Words\nbecause\nfriend\npeople")
+    .map((c) => c.term);
+  assert.deepStrictEqual(spelling, ["because", "friend", "people"], "title-like spelling heading");
+  // ordinary sentence ending in "vocabulary" must NOT start a section
+  const sentence = vocabulary
+    .extractCandidates("Students will learn new vocabulary\nThe lesson covers several topics.")
+    .map((c) => c.term);
+  assert.deepStrictEqual(sentence, [], "sentence ending in vocabulary is not a heading");
+
   // wordlist text
   assert.strictEqual(
     wordlist.text(["tall", "short", "bridge building"]),
