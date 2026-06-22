@@ -48,6 +48,46 @@ final class VocabularyExtractorTests: XCTestCase {
         XCTAssertEqual(terms, ["summer", "hot", "sun", "fan", "hat", "ice cream", "water"])
     }
 
+    func testDetectsTitleLikeVocabularyHeadingWithQualifier() {
+        let text = """
+        Unit 5 Vocabulary
+        tall
+        short
+        happy
+
+        Comprehension
+        Answer the questions below.
+        """
+
+        let terms = VocabularyExtractor.extractCandidates(from: text).map(\.term)
+
+        XCTAssertEqual(terms, ["tall", "short", "happy"])
+    }
+
+    func testDetectsTitleLikeSpellingWordsHeading() {
+        let text = """
+        Week 3 Spelling Words
+        because
+        friend
+        people
+        """
+
+        let terms = VocabularyExtractor.extractCandidates(from: text).map(\.term)
+
+        XCTAssertEqual(terms, ["because", "friend", "people"])
+    }
+
+    func testDoesNotTreatOrdinarySentenceEndingInVocabularyAsHeading() {
+        let text = """
+        Students will learn new vocabulary
+        The lesson covers several topics.
+        """
+
+        let terms = VocabularyExtractor.extractCandidates(from: text).map(\.term)
+
+        XCTAssertEqual(terms, [])
+    }
+
     func testDetectsOCRLineWithKeyWordsPrefixAndCommaList() {
         let text = """
         Key Words summer, hot, sun, fan, hat, ice cream, water

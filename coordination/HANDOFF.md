@@ -83,3 +83,40 @@ Entry template:
 - Affects: Windows licensing gate only (Mac SwiftUI gate was already fine).
 - Others must adapt: win-zh keep the same external-script structure in the
   translated activation.html. Release v0.2.1 / v0.2.1-zh.
+
+### 2026-06-22T00:00:00Z · win-en (+win-zh needs-port) · claude
+- Changed: FIX — Windows ZH never prompted for license activation because both
+  editions shared one license store. Root cause: Electron's `app.getName()` (which
+  drives `userData`) reads the *top-level* package.json `productName`/`name`, not
+  `build.productName`. Both editions had identical top-level `name`
+  (`clipartbrowser-windows`) and no top-level `productName`, so both used
+  `%APPDATA%/clipartbrowser-windows` and shared `license.json`. Added a top-level
+  `productName: "ClipartBrowser"` to windows/package.json and bumped → 0.2.2.
+- Affects: per-edition runtime identity / userData path / license + localStorage
+  isolation (no shared-contract or file-format change; the key format is unchanged).
+- Others must adapt: win-zh — add top-level `productName: "ClipartBrowser CN"` to
+  windows/package.json (keep build.appId `...zh` and build.productName as-is), bump
+  to 0.2.2-zh. This is what makes ZH activate independently and proves the ZH key
+  mechanism works. Note for both: existing 0.2.0/0.2.1 installs move to a new
+  userData folder and must re-activate once (same machine key works).
+- Also triaged (no code change): import "did not populate" was NOT reproducible —
+  docx/txt/rtf populate from source and from a packed app.asar; vocabulary port
+  matches Mac exactly. ZH installer Defender block = unsigned-installer SmartScreen,
+  expected (no signing cert configured). See bugs.md 2026-06-22.
+
+### 2026-06-22T01:00:00Z · mac + win-en (win-zh needs-port) · claude
+- Changed: FIX — vocabulary import returned an empty word list for documents
+  whose heading is a title like "Unit 5 Vocabulary" / "Week 3 Spelling Words"
+  (the matcher required an exact heading phrase). Broadened `isVocabularyHeading`
+  to also accept short title-like lines that END WITH a known heading phrase when
+  the leading qualifier is light (≤2 words or contains a number). Sentences merely
+  ending in "vocabulary" and heading-less docs are still (correctly) ignored.
+- Where: macOS source of truth `Sources/ClipartBrowserCore/VocabularyExtractor.swift`
+  (+3 tests, `swift test` green); ported identically to
+  `windows/src/lib/vocabulary.js` (+`windows/test-logic.js`, green). Verified
+  end-to-end through the real Electron importer on a generated "Unit 5 Vocabulary"
+  docx.
+- Affects: vocabulary-extraction behavior (shared rule). No data/format change.
+- Others must adapt: win-zh — merge `main`; `vocabulary.js` is logic-only (not
+  translated) so the port is a straight merge, then set PARITY win-zh ✅. Re-run
+  `node test-logic.js`.

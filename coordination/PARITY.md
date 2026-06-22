@@ -13,7 +13,7 @@ Legend: ✅ done · 🔧 needs-port · — n/a
 | Import .pdf | ✅ | ✅ | ✅ | EN/ZH: pdfjs-dist (best-effort) |
 | Import .rtf / .txt | ✅ | ✅ | ✅ | |
 | Image OCR (lesson plan) | ✅ | ✅ | ✅ | mac: Vision · EN/ZH: tesseract.js (CDN model) |
-| Vocabulary extraction | ✅ | ✅ | ✅ | +headings "spelling list/words" (2026-06-20); cascade complete |
+| Vocabulary extraction | ✅ | ✅ | 🔧 | +headings "spelling list/words" (2026-06-20). 2026-06-22: also recognize title-like headings ("Unit 5 Vocabulary", "Week 3 Spelling Words"). mac+win-en done; win-zh merge main into vocabulary.js. |
 | Word review + custom terms | ✅ | ✅ | ✅ | |
 | Image search: Google/Baidu/Bing/Yandex | ✅ | ✅ | ✅ | engine list → SCHEMA.md |
 | Universal picker (full-size extraction) | ✅ | ✅ | ✅ | extraction keys → SCHEMA.md |
@@ -28,7 +28,7 @@ Legend: ✅ done · 🔧 needs-port · — n/a
 | Export PPTX | ✅ | ✅ | ✅ | OOXML structure → SCHEMA.md |
 | Export List (.txt / .docx) | ✅ | ✅ | ✅ | |
 | Drag-and-drop import | ✅ | ✅ | ✅ | |
-| License activation (one-per-computer) | ✅ | ✅ | ✅ | Ed25519 machine-locked; activation.html translated. Keygen = Mac-only ClipartKeygen.app |
+| License activation (one-per-computer) | ✅ | ✅ | 🔧 | Ed25519 machine-locked; activation.html translated. Keygen = Mac-only ClipartKeygen.app. 2026-06-22: EN added top-level `productName` so each edition uses its own userData/license store (was shared, so ZH never prompted). win-zh: add top-level `productName: "ClipartBrowser CN"`, bump 0.2.2-zh. |
 | UI language | en | en | **zh-Hans** | ZH = **interface-only** translation (UI + engine names + 剪贴画 qualifier); document vocabulary is NOT translated |
 
 ## How to use
