@@ -24,8 +24,8 @@ Legend: ✅ done · 🔧 needs-port · — n/a
 | Flashcard grid (padding/orientation/labels) | ✅ | ✅ | ✅ | |
 | Card selection / retry / remove | ✅ | ✅ | ✅ | |
 | Browser zoom controls | ✅ | ✅ | ✅ | |
-| Browser bar: engine selector on its own row | 🔧 | ✅ | 🔧 | 2026-06-23: win-en split `#browser-bar` into a tab row + a tool row (labeled "Search engine:" select) so a long tab list no longer hides the engine picker. Windows-originated UX fix; reconcile with Mac (canon). win-zh: merge + translate label. |
-| Inspect-image mode (full-size preview before add) | 🔧 | ✅ | 🔧 | 2026-06-23: win-en added a toggle "🔍 Inspect"; when on, clicking a result downloads it and shows a full-size modal (check watermarks) with Use / Skip, instead of adding immediately. Windows-originated; reconcile with Mac (canon). win-zh: merge + translate toggle/modal strings. |
+| Browser bar: engine selector on its own row | — | ✅ | ✅ | **Windows-only.** 2026-06-23: win-en split `#browser-bar` into a tab row + a tool row (labeled "Search engine:" select) so a long tab list no longer hides the engine picker. Mac's native layout is already fine — not needed there. win-zh: label translated "搜索引擎："。 |
+| Inspect-image mode (full-size preview before add) | — | ✅ | ✅ | **Windows-only.** 2026-06-23: win-en added a toggle "🔍 Inspect"; when on, clicking a result downloads it and shows a full-size pop-up (check watermarks) with Use / Skip, instead of adding immediately. Mac doesn't need this pop-up — not porting to Mac. win-zh: toggle/modal translated ("🔍 查看" / "查看图片" / "使用此图片" / "跳过")。 |
 | Upscaler Preview (compare methods) | ✅ | ✅ | ✅ | mac: window · EN/ZH: modal |
 | Export PPTX | ✅ | ✅ | ✅ | OOXML structure → SCHEMA.md |
 | Export List (.txt / .docx) | ✅ | ✅ | ✅ | |
