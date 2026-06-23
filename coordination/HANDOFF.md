@@ -120,3 +120,24 @@ Entry template:
 - Others must adapt: win-zh — merge `main`; `vocabulary.js` is logic-only (not
   translated) so the port is a straight merge, then set PARITY win-zh ✅. Re-run
   `node test-logic.js`.
+
+### 2026-06-23T00:00:00Z · win-en (win-zh needs-port) · claude
+- Changed: Two Windows-EN UI fixes (user-reported, Windows-originated — reconcile
+  with Mac as canon, do not treat as Mac-derived). (1) The search-engine `<select>`
+  was hard to find: `#browser-bar` was a single flex row where `#tabs` (flex:1) ate
+  the width and pushed the engine picker to the far right. Split the bar into a
+  `#tab-row` (‹ tabs ›) and a `#tool-row` with a labeled "Search engine:" select +
+  zoom/reload/close. (2) New "🔍 Inspect" toggle (persisted in localStorage). When
+  on, clicking a search result downloads it (via existing `download-bigger`) and
+  shows a full-size modal so the teacher can check for watermarks, then Use / Skip;
+  when off, behavior is unchanged (adds immediately). Refactored `handlePick` to
+  split download from a new `commitPick`.
+- Where: `windows/src/index.html` (markup + CSS), `windows/src/renderer.js`
+  (state.inspect/pendingInspect, handlePick/commitPick, showInspect/useInspect/
+  closeInspect, setInspectMode, wiring). `node --check` + `node test-logic.js` green.
+- Affects: Windows-EN renderer UI only. No shared contract, file format, picker
+  extraction keys, or pipeline change.
+- Others must adapt: win-zh — merge `main`; translate the new strings only
+  ("Search engine:", "🔍 Inspect", "Inspect image", "Use this image", "Skip");
+  logic is unchanged. Then set the two new PARITY rows win-zh ✅. Mac (canon):
+  these are downstream UX improvements to fold back when convenient.

@@ -44,7 +44,10 @@
       #right { flex: 1; display: flex; flex-direction: column; min-height: 0; }
       #browser-pane { display: none; flex-direction: column; min-height: 0; flex: 1.1; border-bottom: 1px solid #e5e7eb; }
       #browser-pane.active { display: flex; }
-      #browser-bar { display: flex; gap: 8px; align-items: center; padding: 6px 10px; border-bottom: 1px solid #e5e7eb; }
+      #browser-bar { display: flex; flex-direction: column; gap: 6px; padding: 6px 10px; border-bottom: 1px solid #e5e7eb; }
+      #tab-row, #tool-row { display: flex; gap: 8px; align-items: center; }
+      #engine-label { color: #6b7280; font-size: 13px; }
+      #inspectToggle.on { background: #2563eb; color: #fff; border-color: #2563eb; }
       #tabs { flex: 1; display: flex; gap: 6px; overflow-x: auto; }
       #tabs .tab { padding: 4px 10px; border-radius: 999px; white-space: nowrap; cursor: pointer; color: #6b7280; }
       #tabs .tab.on { background: #e5e7eb; color: #111827; }
@@ -118,15 +121,22 @@
       <div id="right">
         <div id="browser-pane">
           <div id="browser-bar">
-            <button id="prevTab">‹</button>
-            <div id="tabs"></div>
-            <button id="nextTab">›</button>
-            <select id="engine" title="Search engine"></select>
-            <button id="zoomOut" title="Show more images">－</button>
-            <span id="zoomPct" class="muted" style="width: 38px; text-align: center">60%</span>
-            <button id="zoomIn" title="Show fewer, larger">＋</button>
-            <button id="reloadBtn" title="Reload">⟳</button>
-            <button id="closeBrowser" title="Close">✕</button>
+            <div id="tab-row">
+              <button id="prevTab">‹</button>
+              <div id="tabs"></div>
+              <button id="nextTab">›</button>
+            </div>
+            <div id="tool-row">
+              <label id="engine-label" for="engine">Search engine:</label>
+              <select id="engine" title="Search engine"></select>
+              <button id="inspectToggle" title="Inspect an image full-size before adding it (check for watermarks)">🔍 Inspect</button>
+              <div class="spacer" style="flex: 1"></div>
+              <button id="zoomOut" title="Show more images">－</button>
+              <span id="zoomPct" class="muted" style="width: 38px; text-align: center">60%</span>
+              <button id="zoomIn" title="Show fewer, larger">＋</button>
+              <button id="reloadBtn" title="Reload">⟳</button>
+              <button id="closeBrowser" title="Close">✕</button>
+            </div>
           </div>
           <webview id="webview" allowpopups></webview>
         </div>
@@ -158,6 +168,21 @@
           <button id="previewClose">Close</button>
         </div>
         <div id="previewGrid" style="flex: 1; overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; padding: 16px; align-content: start"></div>
+      </div>
+    </div>
+
+    <div id="inspect-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 60; align-items: center; justify-content: center">
+      <div style="background: #fff; width: 80%; height: 86%; border-radius: 10px; display: flex; flex-direction: column; overflow: hidden">
+        <div class="bar" style="border-bottom: 1px solid #e5e7eb">
+          <strong>Inspect image</strong>
+          <span class="muted" id="inspectTitle"></span>
+          <div class="spacer"></div>
+          <button id="inspectClose">Skip</button>
+          <button id="inspectUse" style="background: #2563eb; color: #fff; border-color: #2563eb">Use this image</button>
+        </div>
+        <div style="flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center; padding: 16px; background: repeating-conic-gradient(#f3f4f6 0% 25%, #ffffff 0% 50%) 50% / 24px 24px">
+          <img id="inspectImg" style="max-width: 100%; max-height: 100%; object-fit: contain" />
+        </div>
       </div>
     </div>
 

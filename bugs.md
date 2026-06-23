@@ -2,6 +2,27 @@
 
 This file records user-reported bugs or workflow problems and the fix applied.
 
+## 2026-06-23
+
+### (Windows) Search-engine selector hidden at the far right of the tab strip
+- Symptom: In the browser bar the engine `<select>` sat after a flex-growing tab
+  list, so with many word tabs it was pushed off to the far right and was very
+  hard to find.
+- Fix: Split `#browser-bar` into a `#tab-row` (‹ tabs ›) and a separate
+  `#tool-row` that starts with a labeled "Search engine:" select, followed by the
+  zoom/reload/close controls. `windows/src/index.html`.
+- Verification: `node --check src/renderer.js`, `node test-logic.js` (green);
+  visual layout review.
+
+### (Windows) Added an "Inspect image" mode to check images before adding
+- Request: A selectable mode where clicking a result first shows the full-size
+  image (to check for watermarks, etc.) instead of importing immediately.
+- Fix: New persisted "🔍 Inspect" toggle in the browser tool row. When on,
+  `handlePick` downloads the image and opens a full-size modal with Use / Skip;
+  "Use" runs the normal `commitPick`. When off, behavior is unchanged.
+  `windows/src/index.html`, `windows/src/renderer.js`.
+- Verification: `node --check src/renderer.js`, `node test-logic.js` (green).
+
 ## 2026-06-17
 
 ### Flashcard images were not centered
