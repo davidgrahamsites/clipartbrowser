@@ -1,7 +1,7 @@
 {
   "name": "clipartbrowser-windows",
   "productName": "ClipartBrowser CN",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Windows (Electron) edition of ClipartBrowser — Simplified Chinese",
   "author": "ClipartBrowser",
   "license": "MIT",

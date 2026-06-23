@@ -26,6 +26,8 @@ const state = {
   browsing: false,
   selectedCardId: null,
   importing: false,
+  inspect: localStorage.getItem("inspect") === "1",
+  pendingInspect: null, // {word, dl, pick} awaiting user confirmation
   lastLoadKey: null,
   browserZoom: parseFloat(localStorage.getItem("zoom")) || 0.6,
   previewPanels: [],
@@ -167,6 +169,7 @@ function startPicking() {
 }
 
 function closeBrowser() {
+  if (state.pendingInspect) closeInspect();
   state.browsing = false;
   $("browser-pane").classList.remove("active");
 }
@@ -191,22 +194,41 @@ function advanceAfterImport() {
 }
 
 async function handlePick(pick) {
-  if (state.importing || !state.browsing) return;
+  if (state.importing || state.pendingInspect || !state.browsing) return;
   const tab = currentTab();
   if (!tab) return;
   const word = tab.word;
   state.importing = true;
-  setStatus(`正在为 ${word} 导入图片……`);
+  setStatus(state.inspect ? `正在加载 ${word} 的图片……` : `正在为 ${word} 导入图片……`);
+  let dl;
   try {
-    const dl = await ipcRenderer.invoke("download-bigger", {
+    dl = await ipcRenderer.invoke("download-bigger", {
       imageURL: pick.imageURL,
       thumbnailURL: pick.thumbnailURL,
       referer: pick.pageURL,
     });
-    if (!dl) {
-      setStatus(`无法下载 ${word} 的图片，请尝试其他。`);
-      return;
-    }
+  } catch (err) {
+    setStatus(`无法导入 ${word}：${err.message}`);
+    return;
+  } finally {
+    state.importing = false;
+  }
+  if (!dl) {
+    setStatus(`无法下载 ${word} 的图片，请尝试其他。`);
+    return;
+  }
+  if (state.inspect) {
+    showInspect(word, dl, pick);
+    return;
+  }
+  await commitPick(word, dl, pick);
+}
+
+// 将已下载的图片处理为卡片。
+async function commitPick(word, dl, pick) {
+  state.importing = true;
+  setStatus(`正在为 ${word} 导入图片……`);
+  try {
     const proc = await imageproc.processPicked(dl.dataURL, settingsForProc(), state.upscaler);
     upsertCard(word, proc, pick);
     renderCards();
@@ -218,6 +240,40 @@ async function handlePick(pick) {
   } finally {
     state.importing = false;
   }
+}
+
+// ---------- 查看模式（添加前全尺寸预览） ----------
+function setInspectMode(on) {
+  state.inspect = on;
+  localStorage.setItem("inspect", on ? "1" : "0");
+  const btn = $("inspectToggle");
+  if (btn) btn.classList.toggle("on", on);
+}
+
+function showInspect(word, dl, pick) {
+  state.pendingInspect = { word, dl, pick };
+  $("inspectImg").src = dl.dataURL;
+  const dims = dl.width && dl.height ? ` —— ${dl.width}×${dl.height} 像素` : "";
+  $("inspectTitle").textContent = `${word}${pick.title ? " · " + pick.title : ""}${dims}`;
+  $("inspect-overlay").style.display = "flex";
+  setStatus(`正在查看 ${word} 的图片 —— 使用此图片或跳过以继续浏览。`);
+}
+
+function closeInspect() {
+  const word = state.pendingInspect && state.pendingInspect.word;
+  state.pendingInspect = null;
+  $("inspect-overlay").style.display = "none";
+  $("inspectImg").src = "";
+  if (word) setStatus(`已跳过图片 —— 请为 ${word} 选择其他图片。`);
+}
+
+async function useInspect() {
+  const p = state.pendingInspect;
+  if (!p) return;
+  state.pendingInspect = null;
+  $("inspect-overlay").style.display = "none";
+  $("inspectImg").src = "";
+  await commitPick(p.word, p.dl, p.pick);
 }
 
 function upsertCard(word, proc, pick) {
@@ -500,6 +556,14 @@ function init() {
   $("prevTab").addEventListener("click", () => moveTab(-1));
   $("nextTab").addEventListener("click", () => moveTab(1));
   $("closeBrowser").addEventListener("click", closeBrowser);
+
+  setInspectMode(state.inspect);
+  $("inspectToggle").addEventListener("click", () => setInspectMode(!state.inspect));
+  $("inspectClose").addEventListener("click", closeInspect);
+  $("inspectUse").addEventListener("click", useInspect);
+  $("inspect-overlay").addEventListener("click", (e) => {
+    if (e.target.id === "inspect-overlay") closeInspect();
+  });
   $("reloadBtn").addEventListener("click", () => {
     if (wv.getURL && wv.getURL()) wv.reload();
   });
