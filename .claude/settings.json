@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if grep -qi 'CONFLICT' <(tail -n 3 coordination/STATUS.md 2>/dev/null); then printf '\\u26a0\\ufe0f coordination/STATUS.md shows a CONFLICT \\u2014 resolve before changing code:\\n'; tail -n 3 coordination/STATUS.md; fi"
+            "command": "tail -n 3 coordination/STATUS.md 2>/dev/null | grep -qi 'CONFLICT' && printf '\\u26a0\\ufe0f coordination/STATUS.md shows a CONFLICT \\u2014 resolve before changing code:\\n' && tail -n 3 coordination/STATUS.md; true"
           }
         ]
       }

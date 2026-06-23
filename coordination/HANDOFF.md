@@ -174,3 +174,12 @@ Entry template:
   `node --check src/renderer.js` + `node test-logic.js` green.
 - Affects: Windows-ZH renderer UI only. No shared contract / format change.
 - Others must adapt: nothing downstream. PARITY win-zh ✅ for both new rows.
+
+### 2026-06-23T02:00:00Z · all · claude
+- Changed: Decision (no code) — the two 2026-06-23 Windows UX changes (engine
+  selector on its own row; "🔍 Inspect" full-size pop-up) are **Windows-only**.
+  Per the user, the macOS app's native layout/flow is already fine and does NOT
+  want the large selector or the inspect pop-up. PARITY `mac` cells for both rows
+  flipped 🔧 → — (n/a). Nothing to port to Mac.
+- Affects: coordination/PARITY.md only.
+- Others must adapt: nothing.
